@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hodographes et mécanique céleste</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body data-page="home">
+    <header class="site-header">
+      <a class="logo" href="index.html">HodoAstro</a>
+      <nav>
+        <a href="index.html" aria-current="page">Accueil</a>
+        <a href="kepler.html">Mouvement képlérien</a>
+        <a href="construction.html">Construction du hodographe</a>
+        <a href="applications.html">Applications</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div>
+          <p class="eyebrow">Visualiser la dynamique orbitale autrement</p>
+          <h1>Le hodographe, la carte du vecteur vitesse</h1>
+          <p>
+            Dans un problème gravitationnel à force centrale, le vecteur vitesse d'un astre ne décrit pas un chaos : il parcourt une
+            courbe simple appelée <strong>hodographe</strong>. Pour l'attraction en <em>1/r²</em>, cette courbe est un cercle.
+          </p>
+          <p>
+            Ce mini-site explique pas à pas pourquoi c'est vrai, comment l'interpréter, et pourquoi cette représentation est utile
+            en astrophysique.
+          </p>
+          <a class="cta" href="kepler.html">Commencer la découverte</a>
+        </div>
+        <canvas id="home-canvas" width="520" height="360" aria-label="Animation orbitale et hodographe"></canvas>
+      </section>
+
+      <section class="grid cards">
+        <article>
+          <h2>1. Géométrie de l'orbite</h2>
+          <p>Relier excentricité, moment cinétique et conservation de l'énergie dans une trajectoire elliptique.</p>
+        </article>
+        <article>
+          <h2>2. Espace des vitesses</h2>
+          <p>Passer du plan des positions au plan des vitesses pour faire apparaître une structure circulaire.</p>
+        </article>
+        <article>
+          <h2>3. Usage pratique</h2>
+          <p>Comprendre les variations de vitesse au périastre et à l'apoastre, et l'intérêt pour les manœuvres orbitales.</p>
+        </article>
+      </section>
+    </main>
+
+    <footer>
+      <p>Site pédagogique sur les hodographes — prêt pour déploiement sur GitHub Pages.</p>
+    </footer>
+
+    <script src="app.js"></script>
+  </body>
+</html>
