@@ -1,30 +1,39 @@
 const TAU = Math.PI * 2;
 const MU = 1;
 
+const solveKeplerEquation = (meanAnomaly, e, iterations = 7) => {
+  let eccentricAnomaly = e < 0.8 ? meanAnomaly : Math.PI;
+  for (let i = 0; i < iterations; i += 1) {
+    const f = eccentricAnomaly - e * Math.sin(eccentricAnomaly) - meanAnomaly;
+    const fp = 1 - e * Math.cos(eccentricAnomaly);
+    eccentricAnomaly -= f / fp;
+  }
+  return eccentricAnomaly;
+};
+
+const getOrbitStateAtTime = (a, e, elapsedSeconds, timeScale = 1, mu = MU) => {
+  const meanMotion = Math.sqrt(mu / (a * a * a));
+  const meanAnomaly = ((elapsedSeconds * timeScale * meanMotion) % TAU + TAU) % TAU;
+  const E = solveKeplerEquation(meanAnomaly, e);
+  const oneMinusECosE = 1 - e * Math.cos(E);
+  const b = a * Math.sqrt(1 - e * e);
+
+  const x = a * (Math.cos(E) - e);
+  const y = b * Math.sin(E);
+  const r = a * oneMinusECosE;
+
+  const vx = (-a * meanMotion * Math.sin(E)) / oneMinusECosE;
+  const vy = (b * meanMotion * Math.cos(E)) / oneMinusECosE;
+
+  const p = a * (1 - e * e);
+  const h = Math.sqrt(mu * p);
+
+  return { x, y, r, vx, vy, h };
+};
+
 const getOrbitPoint = (a, e, theta) => {
   const r = (a * (1 - e * e)) / (1 + e * Math.cos(theta));
   return { x: r * Math.cos(theta), y: r * Math.sin(theta), r };
-};
-
-const getOrbitState = (a, e, theta, mu = MU) => {
-  const p = a * (1 - e * e);
-  const r = p / (1 + e * Math.cos(theta));
-  const h = Math.sqrt(mu * p);
-
-  const x = r * Math.cos(theta);
-  const y = r * Math.sin(theta);
-
-  const vr = (mu / h) * e * Math.sin(theta);
-  const vt = (mu / h) * (1 + e * Math.cos(theta));
-
-  return {
-    x,
-    y,
-    r,
-    h,
-    vx: vr * Math.cos(theta) - vt * Math.sin(theta),
-    vy: vr * Math.sin(theta) + vt * Math.cos(theta),
-  };
 };
 
 function drawAxes(ctx, w, h, color = '#274069') {
@@ -42,17 +51,18 @@ function runHome() {
   const canvas = document.getElementById('home-canvas');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
-  let t = 0;
+  let startTime = null;
 
-  const render = () => {
-    t += 0.015;
+  const render = (timestamp) => {
+    if (startTime === null) startTime = timestamp;
+    const elapsedSeconds = (timestamp - startTime) / 1000;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     const cx = 170;
     const cy = 180;
     const a = 110;
     const e = 0.45;
-    const p = getOrbitPoint(a, e, t);
+    const state = getOrbitStateAtTime(a, e, elapsedSeconds, 8);
 
     ctx.strokeStyle = '#5ca5ff';
     ctx.lineWidth = 2;
@@ -70,8 +80,8 @@ function runHome() {
     ctx.arc(cx, cy, 7, 0, TAU);
     ctx.fill();
 
-    const planetX = cx + p.x;
-    const planetY = cy + p.y;
+    const planetX = cx + state.x;
+    const planetY = cy + state.y;
     ctx.fillStyle = '#76e3ff';
     ctx.beginPath();
     ctx.arc(planetX, planetY, 6, 0, TAU);
@@ -80,8 +90,9 @@ function runHome() {
     const hx = 380;
     const hy = 180;
     const hr = 60;
-    const hvx = hr * Math.cos(t) + 18;
-    const hvy = hr * Math.sin(t);
+    const hScale = 55;
+    const hvx = state.vx * hScale + 18;
+    const hvy = state.vy * hScale;
 
     drawAxes(ctx, 260, 360);
 
@@ -114,15 +125,15 @@ function runKepler() {
   const canvas = document.getElementById('kepler-canvas');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
-  let theta = 0;
+  let startTime = null;
   const a = 120;
   const e = 0.55;
-  const p = a * (1 - e * e);
-  const h = Math.sqrt(MU * p);
+  const timeScale = 8;
 
-  const render = () => {
-    const state = getOrbitState(a, e, theta);
-    theta += (h / (state.r * state.r)) * 1.2;
+  const render = (timestamp) => {
+    if (startTime === null) startTime = timestamp;
+    const elapsedSeconds = (timestamp - startTime) / 1000;
+    const state = getOrbitStateAtTime(a, e, elapsedSeconds, timeScale);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     const left = { x: 220, y: 195 };
@@ -167,10 +178,10 @@ function runKepler() {
     const hScale = 240;
     const hcx = right.x;
     const hcy = right.y;
-    const hr = (MU / h) * hScale;
+    const hr = (MU / state.h) * hScale;
     ctx.strokeStyle = '#ffd166';
     ctx.beginPath();
-    ctx.arc(hcx, hcy + (MU * e / h) * hScale, hr, 0, TAU);
+    ctx.arc(hcx, hcy + (MU * e / state.h) * hScale, hr, 0, TAU);
     ctx.stroke();
 
     const hvx = hcx + state.vx * hScale;
@@ -207,15 +218,14 @@ function runConstruction() {
   if (!canvas || !slider || !output) return;
   const ctx = canvas.getContext('2d');
 
-  let theta = 0;
+  let startTime = null;
 
-  const render = () => {
+  const render = (timestamp) => {
+    if (startTime === null) startTime = timestamp;
+    const elapsedSeconds = (timestamp - startTime) / 1000;
     const e = Number(slider.value);
     const a = 130;
-    const p = a * (1 - e * e);
-    const h = Math.sqrt(MU * p);
-    const state = getOrbitState(a, e, theta);
-    theta += (h / (state.r * state.r)) * 1.1;
+    const state = getOrbitStateAtTime(a, e, elapsedSeconds, 8);
     output.textContent = e.toFixed(2);
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -248,8 +258,8 @@ function runConstruction() {
     ctx.fill();
 
     const hScale = 180;
-    const hr = (MU / h) * hScale;
-    const shift = (MU * e / h) * hScale;
+    const hr = (MU / state.h) * hScale;
+    const shift = (MU * e / state.h) * hScale;
     ctx.strokeStyle = '#ffd166';
     ctx.beginPath();
     ctx.arc(right.x + shift, right.y, hr, 0, TAU);
@@ -287,18 +297,17 @@ function runApplications() {
   const canvas = document.getElementById('applications-canvas');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
-  let theta = 0;
+  let startTime = null;
 
-  const render = () => {
+  const render = (timestamp) => {
+    if (startTime === null) startTime = timestamp;
+    const elapsedSeconds = (timestamp - startTime) / 1000;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     const center = { x: 225, y: 190 };
     const a = 130;
     const e = 0.7;
-    const p = a * (1 - e * e);
-    const h = Math.sqrt(MU * p);
-    const state = getOrbitState(a, e, theta);
-    theta += (h / (state.r * state.r)) * 1.3;
+    const state = getOrbitStateAtTime(a, e, elapsedSeconds, 9);
 
     ctx.strokeStyle = '#4e8de6';
     ctx.beginPath();
@@ -323,7 +332,7 @@ function runApplications() {
     ctx.fill();
 
     const speed = Math.hypot(state.vx, state.vy);
-    const maxSpeed = (MU / h) * (1 + e);
+    const maxSpeed = (MU / state.h) * (1 + e);
     const barX = 520;
     const barY = 80;
     const barH = 240;
