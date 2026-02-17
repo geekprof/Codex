@@ -1,8 +1,30 @@
 const TAU = Math.PI * 2;
+const MU = 1;
 
 const getOrbitPoint = (a, e, theta) => {
   const r = (a * (1 - e * e)) / (1 + e * Math.cos(theta));
   return { x: r * Math.cos(theta), y: r * Math.sin(theta), r };
+};
+
+const getOrbitState = (a, e, theta, mu = MU) => {
+  const p = a * (1 - e * e);
+  const r = p / (1 + e * Math.cos(theta));
+  const h = Math.sqrt(mu * p);
+
+  const x = r * Math.cos(theta);
+  const y = r * Math.sin(theta);
+
+  const vr = (mu / h) * e * Math.sin(theta);
+  const vt = (mu / h) * (1 + e * Math.cos(theta));
+
+  return {
+    x,
+    y,
+    r,
+    h,
+    vx: vr * Math.cos(theta) - vt * Math.sin(theta),
+    vy: vr * Math.sin(theta) + vt * Math.cos(theta),
+  };
 };
 
 function drawAxes(ctx, w, h, color = '#274069') {
@@ -95,9 +117,12 @@ function runKepler() {
   let theta = 0;
   const a = 120;
   const e = 0.55;
+  const p = a * (1 - e * e);
+  const h = Math.sqrt(MU * p);
 
   const render = () => {
-    theta += 0.01;
+    const state = getOrbitState(a, e, theta);
+    theta += (h / (state.r * state.r)) * 1.2;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     const left = { x: 220, y: 195 };
@@ -122,18 +147,16 @@ function runKepler() {
     ctx.arc(left.x, left.y, 7, 0, TAU);
     ctx.fill();
 
-    const p = getOrbitPoint(a, e, theta);
-    const px = left.x + p.x;
-    const py = left.y + p.y;
+    const px = left.x + state.x;
+    const py = left.y + state.y;
     ctx.fillStyle = '#76e3ff';
     ctx.beginPath();
     ctx.arc(px, py, 6, 0, TAU);
     ctx.fill();
 
-    const tangent = Math.atan2(py - left.y, px - left.x) + Math.PI / 2;
-    const speed = 28 + 14 * Math.cos(theta);
-    const vx = speed * Math.cos(tangent);
-    const vy = speed * Math.sin(tangent);
+    const velocityScale = 300;
+    const vx = state.vx * velocityScale;
+    const vy = state.vy * velocityScale;
 
     ctx.strokeStyle = '#76e3ff';
     ctx.beginPath();
@@ -141,16 +164,17 @@ function runKepler() {
     ctx.lineTo(px + vx, py + vy);
     ctx.stroke();
 
-    const hcx = right.x + 22;
+    const hScale = 240;
+    const hcx = right.x;
     const hcy = right.y;
-    const hr = 78;
+    const hr = (MU / h) * hScale;
     ctx.strokeStyle = '#ffd166';
     ctx.beginPath();
-    ctx.arc(hcx, hcy, hr, 0, TAU);
+    ctx.arc(hcx, hcy + (MU * e / h) * hScale, hr, 0, TAU);
     ctx.stroke();
 
-    const hvx = hcx + hr * Math.cos(theta);
-    const hvy = hcy + hr * Math.sin(theta);
+    const hvx = hcx + state.vx * hScale;
+    const hvy = hcy + state.vy * hScale;
 
     ctx.strokeStyle = '#2e4c7a';
     ctx.beginPath();
@@ -166,7 +190,7 @@ function runKepler() {
     ctx.fill();
 
     ctx.beginPath();
-    ctx.moveTo(right.x, right.y);
+    ctx.moveTo(hcx, hcy);
     ctx.lineTo(hvx, hvy);
     ctx.stroke();
 
@@ -186,14 +210,17 @@ function runConstruction() {
   let theta = 0;
 
   const render = () => {
-    theta += 0.012;
     const e = Number(slider.value);
+    const a = 130;
+    const p = a * (1 - e * e);
+    const h = Math.sqrt(MU * p);
+    const state = getOrbitState(a, e, theta);
+    theta += (h / (state.r * state.r)) * 1.1;
     output.textContent = e.toFixed(2);
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     const left = { x: 220, y: 215 };
     const right = { x: 645, y: 215 };
-    const a = 130;
 
     ctx.fillStyle = '#dce8ff';
     ctx.fillText(`e = ${e.toFixed(2)}`, 24, 26);
@@ -213,23 +240,23 @@ function runConstruction() {
     ctx.arc(left.x, left.y, 7, 0, TAU);
     ctx.fill();
 
-    const p = getOrbitPoint(a, e, theta);
-    const px = left.x + p.x;
-    const py = left.y + p.y;
+    const px = left.x + state.x;
+    const py = left.y + state.y;
     ctx.fillStyle = '#76e3ff';
     ctx.beginPath();
     ctx.arc(px, py, 6, 0, TAU);
     ctx.fill();
 
-    const hr = 62;
-    const shift = 70 * e;
+    const hScale = 180;
+    const hr = (MU / h) * hScale;
+    const shift = (MU * e / h) * hScale;
     ctx.strokeStyle = '#ffd166';
     ctx.beginPath();
     ctx.arc(right.x + shift, right.y, hr, 0, TAU);
     ctx.stroke();
 
-    const hvx = right.x + shift + hr * Math.cos(theta);
-    const hvy = right.y + hr * Math.sin(theta);
+    const hvx = right.x + state.vx * hScale;
+    const hvy = right.y + state.vy * hScale;
 
     ctx.strokeStyle = '#2e4c7a';
     ctx.beginPath();
@@ -263,13 +290,15 @@ function runApplications() {
   let theta = 0;
 
   const render = () => {
-    theta += 0.017;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     const center = { x: 225, y: 190 };
     const a = 130;
     const e = 0.7;
-    const p = getOrbitPoint(a, e, theta);
+    const p = a * (1 - e * e);
+    const h = Math.sqrt(MU * p);
+    const state = getOrbitState(a, e, theta);
+    theta += (h / (state.r * state.r)) * 1.3;
 
     ctx.strokeStyle = '#4e8de6';
     ctx.beginPath();
@@ -286,21 +315,22 @@ function runApplications() {
     ctx.arc(center.x, center.y, 7, 0, TAU);
     ctx.fill();
 
-    const px = center.x + p.x;
-    const py = center.y + p.y;
+    const px = center.x + state.x;
+    const py = center.y + state.y;
     ctx.fillStyle = '#76e3ff';
     ctx.beginPath();
     ctx.arc(px, py, 6, 0, TAU);
     ctx.fill();
 
-    const speed = 2 + 4 * (1 + Math.cos(theta)) / 2;
+    const speed = Math.hypot(state.vx, state.vy);
+    const maxSpeed = (MU / h) * (1 + e);
     const barX = 520;
     const barY = 80;
     const barH = 240;
     ctx.strokeStyle = '#2e4c7a';
     ctx.strokeRect(barX, barY, 40, barH);
 
-    const fillH = (speed / 6) * barH;
+    const fillH = (speed / maxSpeed) * barH;
     ctx.fillStyle = '#76e3ff';
     ctx.fillRect(barX, barY + barH - fillH, 40, fillH);
 
