@@ -45,7 +45,7 @@ function runHome() {
 
     ctx.fillStyle = '#ffd166';
     ctx.beginPath();
-    ctx.arc(cx - a * e, cy, 7, 0, TAU);
+    ctx.arc(cx, cy, 7, 0, TAU);
     ctx.fill();
 
     const planetX = cx + p.x;
@@ -119,7 +119,7 @@ function runKepler() {
 
     ctx.fillStyle = '#ffd166';
     ctx.beginPath();
-    ctx.arc(left.x - a * e, left.y, 7, 0, TAU);
+    ctx.arc(left.x, left.y, 7, 0, TAU);
     ctx.fill();
 
     const p = getOrbitPoint(a, e, theta);
@@ -210,7 +210,7 @@ function runConstruction() {
 
     ctx.fillStyle = '#ffd166';
     ctx.beginPath();
-    ctx.arc(left.x - a * e, left.y, 7, 0, TAU);
+    ctx.arc(left.x, left.y, 7, 0, TAU);
     ctx.fill();
 
     const p = getOrbitPoint(a, e, theta);
@@ -283,7 +283,7 @@ function runApplications() {
 
     ctx.fillStyle = '#ffd166';
     ctx.beginPath();
-    ctx.arc(center.x - a * e, center.y, 7, 0, TAU);
+    ctx.arc(center.x, center.y, 7, 0, TAU);
     ctx.fill();
 
     const px = center.x + p.x;
