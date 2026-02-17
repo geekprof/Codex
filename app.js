@@ -118,7 +118,7 @@ function runHome() {
     requestAnimationFrame(render);
   };
 
-  render();
+  requestAnimationFrame(render);
 }
 
 function runKepler() {
@@ -208,7 +208,7 @@ function runKepler() {
     requestAnimationFrame(render);
   };
 
-  render();
+  requestAnimationFrame(render);
 }
 
 function runConstruction() {
@@ -290,7 +290,7 @@ function runConstruction() {
     requestAnimationFrame(render);
   };
 
-  render();
+  requestAnimationFrame(render);
 }
 
 function runApplications() {
@@ -351,7 +351,7 @@ function runApplications() {
     requestAnimationFrame(render);
   };
 
-  render();
+  requestAnimationFrame(render);
 }
 
 const page = document.body.dataset.page;
