@@ -1,5 +1,6 @@
 const TAU = Math.PI * 2;
 const MU = 1;
+const ANIMATION_SPEED_MULTIPLIER = 120;
 
 const solveKeplerEquation = (meanAnomaly, e, iterations = 7) => {
   let eccentricAnomaly = e < 0.8 ? meanAnomaly : Math.PI;
@@ -13,7 +14,7 @@ const solveKeplerEquation = (meanAnomaly, e, iterations = 7) => {
 
 const getOrbitStateAtTime = (a, e, elapsedSeconds, timeScale = 1, mu = MU) => {
   const meanMotion = Math.sqrt(mu / (a * a * a));
-  const meanAnomaly = ((elapsedSeconds * timeScale * meanMotion) % TAU + TAU) % TAU;
+  const meanAnomaly = ((elapsedSeconds * timeScale * ANIMATION_SPEED_MULTIPLIER * meanMotion) % TAU + TAU) % TAU;
   const E = solveKeplerEquation(meanAnomaly, e);
   const oneMinusECosE = 1 - e * Math.cos(E);
   const b = a * Math.sqrt(1 - e * e);
