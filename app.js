@@ -212,6 +212,106 @@ function runKepler() {
   requestAnimationFrame(render);
 }
 
+
+function runFeynman() {
+  const canvas = document.getElementById('feynman-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let startTime = null;
+  const a = 120;
+  const e = 0.55;
+  const timeScale = 8;
+
+  const render = (timestamp) => {
+    if (startTime === null) startTime = timestamp;
+    const elapsedSeconds = (timestamp - startTime) / 1000;
+    const state = getOrbitStateAtTime(a, e, elapsedSeconds, timeScale);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const left = { x: 220, y: 195 };
+    const right = { x: 640, y: 195 };
+
+    ctx.fillStyle = '#dce8ff';
+    ctx.fillText('Espace des positions', left.x - 60, 22);
+    ctx.fillText('Hodographe tourné de 90° (vue de Feynman)', right.x - 148, 22);
+
+    ctx.strokeStyle = '#4e8de6';
+    ctx.beginPath();
+    for (let th = 0; th <= TAU; th += 0.02) {
+      const p = getOrbitPoint(a, e, th);
+      const x = left.x + p.x;
+      const y = left.y + p.y;
+      th === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    ctx.fillStyle = '#ffd166';
+    ctx.beginPath();
+    ctx.arc(left.x, left.y, 7, 0, TAU);
+    ctx.fill();
+
+    const px = left.x + state.x;
+    const py = left.y + state.y;
+    ctx.fillStyle = '#76e3ff';
+    ctx.beginPath();
+    ctx.arc(px, py, 6, 0, TAU);
+    ctx.fill();
+
+    const velocityScale = 300;
+    const vx = state.vx * velocityScale;
+    const vy = state.vy * velocityScale;
+
+    ctx.strokeStyle = '#76e3ff';
+    ctx.beginPath();
+    ctx.moveTo(px, py);
+    ctx.lineTo(px + vx, py + vy);
+    ctx.stroke();
+
+    const hScale = 240;
+    const hr = (MU / state.h) * hScale;
+    const shift = (MU * e / state.h) * hScale;
+
+    // Rotation +90°: (x, y) -> (-y, x)
+    const rotate90 = (x, y) => ({ x: -y, y: x });
+
+    const centerOffset = rotate90(shift, 0);
+    const hcx = right.x + centerOffset.x;
+    const hcy = right.y + centerOffset.y;
+
+    ctx.strokeStyle = '#ffd166';
+    ctx.beginPath();
+    ctx.arc(hcx, hcy, hr, 0, TAU);
+    ctx.stroke();
+
+    const vRot = rotate90(state.vx * hScale, state.vy * hScale);
+    const hvx = right.x + vRot.x;
+    const hvy = right.y + vRot.y;
+
+    ctx.strokeStyle = '#2e4c7a';
+    ctx.beginPath();
+    ctx.moveTo(right.x - 130, right.y);
+    ctx.lineTo(right.x + 130, right.y);
+    ctx.moveTo(right.x, right.y - 130);
+    ctx.lineTo(right.x, right.y + 130);
+    ctx.stroke();
+
+    ctx.fillStyle = '#76e3ff';
+    ctx.beginPath();
+    ctx.arc(hvx, hvy, 5, 0, TAU);
+    ctx.fill();
+
+    ctx.strokeStyle = '#76e3ff';
+    ctx.beginPath();
+    ctx.moveTo(right.x, right.y);
+    ctx.lineTo(hvx, hvy);
+    ctx.stroke();
+
+    requestAnimationFrame(render);
+  };
+
+  requestAnimationFrame(render);
+}
+
 function runConstruction() {
   const canvas = document.getElementById('construction-canvas');
   const slider = document.getElementById('ecc');
@@ -360,3 +460,4 @@ if (page === 'home') runHome();
 if (page === 'kepler') runKepler();
 if (page === 'construction') runConstruction();
 if (page === 'applications') runApplications();
+if (page === 'feynman') runFeynman();

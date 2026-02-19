@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rotation de l'hodographe | HodoAstro</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script>
+      window.MathJax = {
+        tex: {
+          inlineMath: [["\\(", "\\)"], ["$", "$"]],
+          displayMath: [["\\[", "\\]"], ["$$", "$$"]],
+        },
+      };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  </head>
+  <body data-page="feynman">
+    <header class="site-header">
+      <a class="logo" href="index.html">HodoAstro</a>
+      <nav>
+        <a href="index.html">Accueil</a>
+        <a href="kepler.html">Mouvement képlérien</a>
+        <a href="construction.html">Construction du hodographe</a>
+        <a href="applications.html">Applications</a>
+        <a href="feynman.html" aria-current="page">Vue Feynman</a>
+      </nav>
+    </header>
+
+    <main class="page-layout">
+      <section>
+        <h1>Orbite à gauche, hodographe tourné à droite</h1>
+        <p>
+          Même dynamique, mais nouvelle lecture géométrique : le plan des vitesses est pivoté de \(90^\circ\)
+          pour obtenir une représentation « à la Feynman ». La trajectoire dans l'espace réel ne change pas,
+          seule l'orientation de l'hodographe est modifiée.
+        </p>
+        <p class="formula">\[(v_x, v_y) \mapsto (-v_y, v_x)\]</p>
+      </section>
+
+      <section class="panel">
+        <h2>Animation comparative</h2>
+        <canvas id="feynman-canvas" width="860" height="390" aria-label="Orbite à gauche et hodographe tourné de 90 degrés à droite"></canvas>
+        <p class="legend">
+          À gauche : espace des positions. À droite : même hodographe, simplement tourné de 90° dans le plan des vitesses.
+        </p>
+      </section>
+    </main>
+
+    <footer><p>Page 5 — Rotation « à la Feynman ».</p></footer>
+    <script src="app.js"></script>
+  </body>
+</html>
