@@ -418,9 +418,10 @@ function runHodographe() {
   const restart = document.getElementById('restart-hodographe');
   if (!canvas || !slider || !nValue || !stepValue || !dThetaValue || !restart) return;
   const ctx = canvas.getContext('2d');
-
-  const posOrigin = { x: 210, y: 250 };
-  const velOrigin = { x: 730, y: 230 };
+  const panelWidth = canvas.width / 3;
+  const posOrigin = { x: panelWidth * 0.44, y: 250 };
+  const velOrigin = { x: panelWidth * 1.5, y: 230 };
+  const overlayOrigin = { x: panelWidth * 2.5, y: 240 };
   const posScale = 130;
   const velScale = 95;
   const stepDurationMs = 650;
@@ -443,25 +444,41 @@ function runHodographe() {
   restart.addEventListener('click', resetModel);
   resetModel();
 
-  function toPosCanvas(p) {
-    return { x: posOrigin.x + posScale * p.x, y: posOrigin.y - posScale * p.y };
+  function toPosCanvas(point, origin = posOrigin, scale = posScale) {
+    return { x: origin.x + scale * point.x, y: origin.y - scale * point.y };
   }
 
-  function toVelCanvas(v) {
-    return { x: velOrigin.x + velScale * v.x, y: velOrigin.y - velScale * v.y };
+  function toVelCanvas(velocity, origin = velOrigin, scale = velScale) {
+    return { x: origin.x + scale * velocity.x, y: origin.y - scale * velocity.y };
   }
 
-  function drawReferenceOrbit() {
+  function drawReferenceOrbit(origin = posOrigin, scale = posScale) {
     ctx.strokeStyle = 'rgba(118, 227, 255, 0.35)';
     ctx.lineWidth = 1.2;
     ctx.setLineDash([5, 4]);
     ctx.beginPath();
     const p = 1 * (1 - model.e * model.e);
-    for (let th = 0; th <= TAU + 0.01; th += 0.02) {
-      const r = p / (1 + model.e * Math.cos(th));
-      const pt = toPosCanvas({ x: r * Math.cos(th), y: r * Math.sin(th) });
-      if (th === 0) ctx.moveTo(pt.x, pt.y);
-      else ctx.lineTo(pt.x, pt.y);
+    for (let theta = 0; theta <= TAU + 0.01; theta += 0.02) {
+      const radius = p / (1 + model.e * Math.cos(theta));
+      const point = toPosCanvas({ x: radius * Math.cos(theta), y: radius * Math.sin(theta) }, origin, scale);
+      if (theta === 0) ctx.moveTo(point.x, point.y);
+      else ctx.lineTo(point.x, point.y);
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  function drawRotatedTheoreticalHodograph(origin, scale) {
+    ctx.strokeStyle = 'rgba(255, 209, 102, 0.8)';
+    ctx.lineWidth = 1.2;
+    ctx.setLineDash([5, 4]);
+    ctx.beginPath();
+    for (let theta = 0; theta <= TAU + 0.01; theta += 0.02) {
+      const state = getOrbitalState(1, model.e, theta);
+      const rotated = { x: state.vy, y: -state.vx };
+      const point = toVelCanvas(rotated, origin, scale);
+      if (theta === 0) ctx.moveTo(point.x, point.y);
+      else ctx.lineTo(point.x, point.y);
     }
     ctx.stroke();
     ctx.setLineDash([]);
@@ -474,19 +491,25 @@ function runHodographe() {
       currentStep = (currentStep + 1) % model.steps.length;
     }
 
+    const step = model.steps[currentStep];
+    const overlayVelScale = posScale * ((model.h * model.h) / MU);
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = '#dce8ff';
     ctx.font = '15px Inter, system-ui, sans-serif';
-    ctx.fillText('Plan des positions', 132, 28);
-    ctx.fillText('Plan des vitesses (hodographe)', 628, 28);
+    ctx.fillText('Plan des positions', panelWidth * 0.24, 28);
+    ctx.fillText('Plan des vitesses (hodographe)', panelWidth + panelWidth * 0.16, 28);
+    ctx.fillText('Superposition position + hodographe tourne', panelWidth * 2 + panelWidth * 0.02, 28);
 
     ctx.strokeStyle = 'rgba(118, 227, 255, 0.2)';
     ctx.beginPath();
-    ctx.moveTo(480, 35);
-    ctx.lineTo(480, 425);
+    ctx.moveTo(panelWidth, 35);
+    ctx.lineTo(panelWidth, 425);
+    ctx.moveTo(panelWidth * 2, 35);
+    ctx.lineTo(panelWidth * 2, 425);
     ctx.stroke();
 
-    drawReferenceOrbit();
+    drawReferenceOrbit(posOrigin, posScale);
 
     ctx.fillStyle = '#ffd166';
     ctx.beginPath();
@@ -494,25 +517,24 @@ function runHodographe() {
     ctx.fill();
     ctx.fillText('S', posOrigin.x + 10, posOrigin.y - 10);
 
-    const step = model.steps[currentStep];
-    const p0 = toPosCanvas(step.point);
-    const p1 = toPosCanvas(step.nextPoint);
+    const p0 = toPosCanvas(step.point, posOrigin, posScale);
+    const p1 = toPosCanvas(step.nextPoint, posOrigin, posScale);
 
     ctx.strokeStyle = '#76e3ff';
     ctx.lineWidth = 2;
     ctx.beginPath();
     for (let i = 0; i <= currentStep; i++) {
-      const pt = toPosCanvas(model.steps[i].point);
-      if (i === 0) ctx.moveTo(pt.x, pt.y);
-      else ctx.lineTo(pt.x, pt.y);
+      const point = toPosCanvas(model.steps[i].point, posOrigin, posScale);
+      if (i === 0) ctx.moveTo(point.x, point.y);
+      else ctx.lineTo(point.x, point.y);
     }
     ctx.lineTo(p1.x, p1.y);
     ctx.stroke();
 
     drawArrow(ctx, p0.x, p0.y, p1.x, p1.y, '#8be9a8', 2.5);
 
-    const ray0 = toPosCanvas({ x: 1.7 * Math.cos(step.theta), y: 1.7 * Math.sin(step.theta) });
-    const ray1 = toPosCanvas({ x: 1.7 * Math.cos(step.targetTheta), y: 1.7 * Math.sin(step.targetTheta) });
+    const ray0 = toPosCanvas({ x: 1.7 * Math.cos(step.theta), y: 1.7 * Math.sin(step.theta) }, posOrigin, posScale);
+    const ray1 = toPosCanvas({ x: 1.7 * Math.cos(step.targetTheta), y: 1.7 * Math.sin(step.targetTheta) }, posOrigin, posScale);
     ctx.strokeStyle = 'rgba(255, 209, 102, 0.55)';
     ctx.setLineDash([4, 4]);
     ctx.beginPath();
@@ -548,7 +570,7 @@ function runHodographe() {
 
     drawAxesAt(ctx, velOrigin.x, velOrigin.y, 130);
     const base = MU / model.h;
-    const circleCenter = toVelCanvas({ x: 0, y: base * model.e });
+    const circleCenter = toVelCanvas({ x: 0, y: base * model.e }, velOrigin, velScale);
     ctx.strokeStyle = 'rgba(255, 209, 102, 0.8)';
     ctx.lineWidth = 1.2;
     ctx.setLineDash([5, 4]);
@@ -561,15 +583,15 @@ function runHodographe() {
     ctx.lineWidth = 2;
     ctx.beginPath();
     for (let i = 0; i <= currentStep; i++) {
-      const vv = toVelCanvas(model.steps[i].velocity);
-      if (i === 0) ctx.moveTo(vv.x, vv.y);
-      else ctx.lineTo(vv.x, vv.y);
+      const velocity = toVelCanvas(model.steps[i].velocity, velOrigin, velScale);
+      if (i === 0) ctx.moveTo(velocity.x, velocity.y);
+      else ctx.lineTo(velocity.x, velocity.y);
     }
-    const vNext = toVelCanvas(step.nextVelocity);
+    const vNext = toVelCanvas(step.nextVelocity, velOrigin, velScale);
     ctx.lineTo(vNext.x, vNext.y);
     ctx.stroke();
 
-    const v0 = toVelCanvas(step.velocity);
+    const v0 = toVelCanvas(step.velocity, velOrigin, velScale);
     drawArrow(ctx, v0.x, v0.y, vNext.x, vNext.y, '#ff8fa3', 2.2);
     ctx.fillStyle = '#ff8fa3';
     const dvTextX = (v0.x + vNext.x) * 0.5 + 8;
@@ -586,6 +608,24 @@ function runHodographe() {
     ctx.beginPath();
     ctx.arc(vNext.x, vNext.y, 4, 0, TAU);
     ctx.fill();
+
+    drawAxesAt(ctx, overlayOrigin.x, overlayOrigin.y, 130);
+    drawReferenceOrbit(overlayOrigin, posScale);
+    drawRotatedTheoreticalHodograph(overlayOrigin, overlayVelScale);
+
+    ctx.strokeStyle = '#76e3ff';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let i = 0; i <= currentStep; i++) {
+      const rotated = { x: model.steps[i].velocity.y, y: -model.steps[i].velocity.x };
+      const point = toVelCanvas(rotated, overlayOrigin, overlayVelScale);
+      if (i === 0) ctx.moveTo(point.x, point.y);
+      else ctx.lineTo(point.x, point.y);
+    }
+    const rotatedNext = { x: step.nextVelocity.y, y: -step.nextVelocity.x };
+    const pointNext = toVelCanvas(rotatedNext, overlayOrigin, overlayVelScale);
+    ctx.lineTo(pointNext.x, pointNext.y);
+    ctx.stroke();
 
     stepValue.textContent = `${currentStep + 1} / ${model.steps.length}`;
     requestAnimationFrame(render);
