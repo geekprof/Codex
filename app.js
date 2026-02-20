@@ -362,8 +362,8 @@ function buildHodographeSteps(n, e = 0.55) {
 
   for (let k = 0; k < n; k++) {
     const theta = Math.atan2(point.y, point.x);
-    const r = Math.hypot(point.x, point.y);
-    const rHat = { x: point.x / r, y: point.y / r };
+    const midTheta = theta + 0.5 * dTheta;
+    const rHat = { x: Math.cos(midTheta), y: Math.sin(midTheta) };
     const targetTheta = theta + dTheta;
     const targetDir = { x: Math.cos(targetTheta), y: Math.sin(targetTheta) };
 
@@ -548,12 +548,14 @@ function runHodographe() {
 
     drawAxesAt(ctx, velOrigin.x, velOrigin.y, 130);
     const base = MU / model.h;
-    const circleCenter = toVelCanvas({ x: 0, y: -base * model.e });
-    ctx.strokeStyle = '#ffd166';
-    ctx.lineWidth = 1.7;
+    const circleCenter = toVelCanvas({ x: 0, y: base * model.e });
+    ctx.strokeStyle = 'rgba(255, 209, 102, 0.8)';
+    ctx.lineWidth = 1.2;
+    ctx.setLineDash([5, 4]);
     ctx.beginPath();
     ctx.arc(circleCenter.x, circleCenter.y, velScale * base, 0, TAU);
     ctx.stroke();
+    ctx.setLineDash([]);
 
     ctx.strokeStyle = '#76e3ff';
     ctx.lineWidth = 2;
@@ -570,7 +572,11 @@ function runHodographe() {
     const v0 = toVelCanvas(step.velocity);
     drawArrow(ctx, v0.x, v0.y, vNext.x, vNext.y, '#ff8fa3', 2.2);
     ctx.fillStyle = '#ff8fa3';
-    ctx.fillText('Δv', (v0.x + vNext.x) * 0.5 + 8, (v0.y + vNext.y) * 0.5 - 8);
+    const dvTextX = (v0.x + vNext.x) * 0.5 + 8;
+    const dvTextY = (v0.y + vNext.y) * 0.5 - 8;
+    ctx.fillText('Δv', dvTextX, dvTextY);
+    const dvWidth = ctx.measureText('Δv').width;
+    drawArrow(ctx, dvTextX + 1, dvTextY - 12, dvTextX + dvWidth - 1, dvTextY - 12, '#ff8fa3', 1.6);
 
     ctx.fillStyle = '#76e3ff';
     ctx.beginPath();
