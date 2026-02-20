@@ -123,6 +123,26 @@ canvas {
   margin: 1rem 0;
 }
 
+.inline-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+
+button {
+  background: rgba(118, 227, 255, 0.2);
+  color: var(--text);
+  border: 1px solid rgba(118, 227, 255, 0.35);
+  border-radius: 0.55rem;
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+}
+
+button:hover {
+  background: rgba(118, 227, 255, 0.3);
+}
+
 input[type="range"] {
   width: 100%;
 }
