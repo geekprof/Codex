@@ -312,7 +312,7 @@ function runApplications() {
     ctx.fillStyle = '#dce8ff';
     ctx.fillText('vitesse orbitale', barX - 20, barY - 15);
     ctx.fillText('apoastre', 575, 300);
-    ctx.fillText('pÃ©riastre', 575, 100);
+    ctx.fillText('p\u00E9riastre', 575, 100);
 
     requestAnimationFrame(render);
   };
@@ -431,6 +431,9 @@ function runHodographe() {
   const topAxesHalfSize = 165 * zoomFactor;
   const bottomAxesHalfSize = 240 * zoomFactor;
   const stepDurationMs = 650;
+  const colorPosition = '#4e8de6';
+  const colorVelocity = '#ffd166';
+  const colorDashed = 'rgba(180, 192, 210, 0.6)';
 
   let model = buildHodographeSteps(Number(slider.value));
   let currentStep = 0;
@@ -443,7 +446,7 @@ function runHodographe() {
     nValue.textContent = String(model.steps.length);
     stepValue.textContent = `0 / ${model.steps.length}`;
     const dThetaDeg = (model.dTheta * 180) / Math.PI;
-    dThetaValue.textContent = `${model.dTheta.toFixed(4)} rad (${dThetaDeg.toFixed(2)}°)`;
+    dThetaValue.textContent = `${model.dTheta.toFixed(4)} rad (${dThetaDeg.toFixed(2)}\u00B0)`;
   }
 
   slider.addEventListener('input', resetModel);
@@ -459,7 +462,7 @@ function runHodographe() {
   }
 
   function drawReferenceOrbit(origin = posOrigin, scale = posScale) {
-    ctx.strokeStyle = 'rgba(118, 227, 255, 0.35)';
+    ctx.strokeStyle = colorDashed;
     ctx.lineWidth = 1.2;
     ctx.setLineDash([5, 4]);
     ctx.beginPath();
@@ -475,7 +478,7 @@ function runHodographe() {
   }
 
   function drawRotatedTheoreticalHodograph(origin, scale) {
-    ctx.strokeStyle = 'rgba(255, 209, 102, 0.8)';
+    ctx.strokeStyle = colorDashed;
     ctx.lineWidth = 1.2;
     ctx.setLineDash([5, 4]);
     ctx.beginPath();
@@ -505,7 +508,7 @@ function runHodographe() {
     ctx.font = '22px Inter, system-ui, sans-serif';
     ctx.fillText('Plan des positions', posOrigin.x - 150, 40);
     ctx.fillText('Plan des vitesses (hodographe)', velOrigin.x - 190, 40);
-    ctx.fillText('Superposition position + hodographe tourne', overlayOrigin.x - 225, topBottomSplitY + 42);
+    ctx.fillText('Superposition position + hodographe tourn\u00E9 de 90\u00B0', overlayOrigin.x - 225, topBottomSplitY + 42);
     ctx.font = '18px Inter, system-ui, sans-serif';
 
     ctx.strokeStyle = 'rgba(118, 227, 255, 0.2)';
@@ -527,7 +530,7 @@ function runHodographe() {
     const p0 = toPosCanvas(step.point, posOrigin, posScale);
     const p1 = toPosCanvas(step.nextPoint, posOrigin, posScale);
 
-    ctx.strokeStyle = '#76e3ff';
+    ctx.strokeStyle = colorPosition;
     ctx.lineWidth = 2;
     ctx.beginPath();
     for (let i = 0; i <= currentStep; i++) {
@@ -542,7 +545,7 @@ function runHodographe() {
 
     const ray0 = toPosCanvas({ x: 1.7 * Math.cos(step.theta), y: 1.7 * Math.sin(step.theta) }, posOrigin, posScale);
     const ray1 = toPosCanvas({ x: 1.7 * Math.cos(step.targetTheta), y: 1.7 * Math.sin(step.targetTheta) }, posOrigin, posScale);
-    ctx.strokeStyle = 'rgba(255, 209, 102, 0.55)';
+    ctx.strokeStyle = colorDashed;
     ctx.setLineDash([4, 4]);
     ctx.beginPath();
     ctx.moveTo(posOrigin.x, posOrigin.y);
@@ -552,7 +555,7 @@ function runHodographe() {
     ctx.stroke();
     ctx.setLineDash([]);
 
-    ctx.fillStyle = '#76e3ff';
+    ctx.fillStyle = colorPosition;
     ctx.beginPath();
     ctx.arc(p0.x, p0.y, 6, 0, TAU);
     ctx.fill();
@@ -569,16 +572,16 @@ function runHodographe() {
     ctx.fillStyle = '#8be9a8';
     const drX = legendEnd.x + 8;
     const drY = legendEnd.y + 4;
-    ctx.fillText('Δr', drX, drY);
-    const drWidth = ctx.measureText('Δr').width;
+    ctx.fillText('\u0394r', drX, drY);
+    const drWidth = ctx.measureText('\u0394r').width;
     drawArrow(ctx, drX + 1, drY - 13, drX + drWidth - 1, drY - 13, '#8be9a8', 1.8);
     ctx.fillStyle = '#dce8ff';
-    ctx.fillText('vecteur déplacement', legendEnd.x + 34, legendEnd.y + 4);
+    ctx.fillText('vecteur d\u00E9placement', legendEnd.x + 34, legendEnd.y + 4);
 
     drawAxesAt(ctx, velOrigin.x, velOrigin.y, topAxesHalfSize);
     const base = MU / model.h;
     const circleCenter = toVelCanvas({ x: 0, y: base * model.e }, velOrigin, velScale);
-    ctx.strokeStyle = 'rgba(255, 209, 102, 0.8)';
+    ctx.strokeStyle = colorDashed;
     ctx.lineWidth = 1.2;
     ctx.setLineDash([5, 4]);
     ctx.beginPath();
@@ -586,7 +589,7 @@ function runHodographe() {
     ctx.stroke();
     ctx.setLineDash([]);
 
-    ctx.strokeStyle = '#76e3ff';
+    ctx.strokeStyle = colorVelocity;
     ctx.lineWidth = 2;
     ctx.beginPath();
     for (let i = 0; i <= currentStep; i++) {
@@ -603,11 +606,11 @@ function runHodographe() {
     ctx.fillStyle = '#ff8fa3';
     const dvTextX = (v0.x + vNext.x) * 0.5 + 8;
     const dvTextY = (v0.y + vNext.y) * 0.5 - 8;
-    ctx.fillText('Δv', dvTextX, dvTextY);
-    const dvWidth = ctx.measureText('Δv').width;
+    ctx.fillText('\u0394v', dvTextX, dvTextY);
+    const dvWidth = ctx.measureText('\u0394v').width;
     drawArrow(ctx, dvTextX + 1, dvTextY - 12, dvTextX + dvWidth - 1, dvTextY - 12, '#ff8fa3', 1.6);
 
-    ctx.fillStyle = '#76e3ff';
+    ctx.fillStyle = colorVelocity;
     ctx.beginPath();
     ctx.arc(v0.x, v0.y, 5, 0, TAU);
     ctx.fill();
@@ -619,7 +622,7 @@ function runHodographe() {
     drawAxesAt(ctx, overlayOrigin.x, overlayOrigin.y, bottomAxesHalfSize);
     drawRotatedTheoreticalHodograph(overlayOrigin, overlayVelScale);
 
-    ctx.strokeStyle = 'rgba(139, 233, 168, 0.45)';
+    ctx.strokeStyle = colorDashed;
     ctx.lineWidth = 1.2;
     ctx.setLineDash([5, 4]);
     ctx.beginPath();
@@ -632,7 +635,7 @@ function runHodographe() {
     ctx.stroke();
     ctx.setLineDash([]);
 
-    ctx.strokeStyle = '#8be9a8';
+    ctx.strokeStyle = colorPosition;
     ctx.lineWidth = 2;
     ctx.beginPath();
     for (let i = 0; i <= currentStep; i++) {
@@ -644,7 +647,7 @@ function runHodographe() {
     ctx.lineTo(positionNext.x, positionNext.y);
     ctx.stroke();
 
-    ctx.strokeStyle = '#76e3ff';
+    ctx.strokeStyle = colorVelocity;
     ctx.lineWidth = 2;
     ctx.beginPath();
     for (let i = 0; i <= currentStep; i++) {
