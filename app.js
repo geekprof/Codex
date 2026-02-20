@@ -420,13 +420,16 @@ function runHodographe() {
 
   const ctx = canvas.getContext('2d');
   const topPanelWidth = canvas.width / 2;
-  const topBottomSplitY = 560;
-  const posOrigin = { x: topPanelWidth * 0.5, y: 270 };
-  const velOrigin = { x: topPanelWidth * 1.5, y: 260 };
-  const overlayOrigin = { x: canvas.width * 0.5, y: 830 };
-  const posScale = 150;
-  const velScale = 120;
+  const topBottomSplitY = 620;
+  const posOrigin = { x: topPanelWidth * 0.5, y: 320 };
+  const velOrigin = { x: topPanelWidth * 1.5, y: 320 };
+  const overlayOrigin = { x: canvas.width * 0.5, y: 950 };
+  const zoomFactor = 1.25;
+  const posScale = 150 * zoomFactor;
+  const velScale = 120 * zoomFactor;
   const overlayPosScale = posScale;
+  const topAxesHalfSize = 165 * zoomFactor;
+  const bottomAxesHalfSize = 240 * zoomFactor;
   const stepDurationMs = 650;
 
   let model = buildHodographeSteps(Number(slider.value));
@@ -499,10 +502,11 @@ function runHodographe() {
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = '#dce8ff';
-    ctx.font = '15px Inter, system-ui, sans-serif';
-    ctx.fillText('Plan des positions', posOrigin.x - 115, 30);
-    ctx.fillText('Plan des vitesses (hodographe)', velOrigin.x - 145, 30);
-    ctx.fillText('Superposition position + hodographe tourne', overlayOrigin.x - 170, topBottomSplitY + 32);
+    ctx.font = '22px Inter, system-ui, sans-serif';
+    ctx.fillText('Plan des positions', posOrigin.x - 150, 40);
+    ctx.fillText('Plan des vitesses (hodographe)', velOrigin.x - 190, 40);
+    ctx.fillText('Superposition position + hodographe tourne', overlayOrigin.x - 225, topBottomSplitY + 42);
+    ctx.font = '18px Inter, system-ui, sans-serif';
 
     ctx.strokeStyle = 'rgba(118, 227, 255, 0.2)';
     ctx.beginPath();
@@ -571,7 +575,7 @@ function runHodographe() {
     ctx.fillStyle = '#dce8ff';
     ctx.fillText('vecteur déplacement', legendEnd.x + 34, legendEnd.y + 4);
 
-    drawAxesAt(ctx, velOrigin.x, velOrigin.y, 165);
+    drawAxesAt(ctx, velOrigin.x, velOrigin.y, topAxesHalfSize);
     const base = MU / model.h;
     const circleCenter = toVelCanvas({ x: 0, y: base * model.e }, velOrigin, velScale);
     ctx.strokeStyle = 'rgba(255, 209, 102, 0.8)';
@@ -612,7 +616,7 @@ function runHodographe() {
     ctx.arc(vNext.x, vNext.y, 4, 0, TAU);
     ctx.fill();
 
-    drawAxesAt(ctx, overlayOrigin.x, overlayOrigin.y, 240);
+    drawAxesAt(ctx, overlayOrigin.x, overlayOrigin.y, bottomAxesHalfSize);
     drawRotatedTheoreticalHodograph(overlayOrigin, overlayVelScale);
 
     ctx.strokeStyle = 'rgba(139, 233, 168, 0.45)';
