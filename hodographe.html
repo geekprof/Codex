@@ -12,7 +12,7 @@
       <a class="logo" href="index.html">HodoAstro</a>
       <nav>
         <a href="index.html">Accueil</a>
-        <a href="kepler.html">Mouvement képlérien</a>
+        <a href="kepler.html">Mouvement keplerien</a>
         <a href="construction.html">Construction du hodographe</a>
         <a href="hodographe.html" aria-current="page">Hodographe</a>
         <a href="applications.html">Applications</a>
@@ -21,14 +21,12 @@
 
     <main class="page-layout">
       <section>
-        <h1>Construction discrète de Feynman</h1>
-        <p>
-          On part du périhélie, puis on avance par angles égaux \(\Delta \theta = 2\pi/n\). À chaque pas:
-        </p>
+        <h1>Construction discrete de Feynman</h1>
+        <p>On part du perihelie, puis on avance par angles egaux \(\Delta \theta = 2\pi/n\).</p>
         <ol>
-          <li>On trace le segment depuis \(P_k\), parallèle à \(\vec v_k\).</li>
+          <li>On trace le segment depuis \(P_k\), parallele a \(\vec v_k\).</li>
           <li>On prend son intersection avec le rayon d'angle \(\theta_k + \Delta \theta\), ce qui donne \(P_{k+1}\).</li>
-          <li>On met à jour la vitesse avec \(\Delta \vec v_k = -(\mu/h)\Delta\theta\,\hat r_k\).</li>
+          <li>On met a jour la vitesse avec \(\Delta \vec v_k = -(\mu/h)\Delta\theta\,\hat r_k\).</li>
         </ol>
         <div class="controls inline-controls">
           <label for="n-steps">n (parts de \(2\pi\))</label>
@@ -38,20 +36,20 @@
         </div>
         <p class="legend">
           Pas courant: <span id="hodo-step">0 / 24</span> |
-          \(\Delta\theta\): <span id="hodo-dtheta">0.2618 rad (15.00°)</span>
+          \(\Delta\theta\): <span id="hodo-dtheta">0.2618 rad (15.00 deg)</span>
         </p>
       </section>
 
       <section class="panel">
-        <canvas id="hodographe-canvas" width="1440" height="460" aria-label="Animation discrète de la construction du hodographe"></canvas>
+        <canvas id="hodographe-canvas" width="1320" height="1120" aria-label="Animation discrete de la construction du hodographe"></canvas>
         <p class="legend">
-          Gauche: orbite construite pas à pas (S attracteur, P planète, segment parallèle à \(\vec v\)). Milieu: plan des vitesses
-          avec incréments \(\Delta \vec v\). Droite: superposition orbite + hodographe tourné de \(90^\circ\), à l'échelle.
+          Haut gauche: orbite construite pas a pas. Haut droite: plan des vitesses (hodographe).
+          Bas centre: superposition orbite + hodographe tourne de 90 degres, avec l'echelle adaptee.
         </p>
       </section>
     </main>
 
-    <footer><p>Page 5 — Démonstration discrète du hodographe.</p></footer>
+    <footer><p>Page 5 - Demonstration discrete du hodographe.</p></footer>
     <script src="app.js"></script>
   </body>
 </html>

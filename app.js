@@ -312,7 +312,7 @@ function runApplications() {
     ctx.fillStyle = '#dce8ff';
     ctx.fillText('vitesse orbitale', barX - 20, barY - 15);
     ctx.fillText('apoastre', 575, 300);
-    ctx.fillText('périastre', 575, 100);
+    ctx.fillText('pÃ©riastre', 575, 100);
 
     requestAnimationFrame(render);
   };
@@ -417,13 +417,16 @@ function runHodographe() {
   const dThetaValue = document.getElementById('hodo-dtheta');
   const restart = document.getElementById('restart-hodographe');
   if (!canvas || !slider || !nValue || !stepValue || !dThetaValue || !restart) return;
+
   const ctx = canvas.getContext('2d');
-  const panelWidth = canvas.width / 3;
-  const posOrigin = { x: panelWidth * 0.44, y: 250 };
-  const velOrigin = { x: panelWidth * 1.5, y: 230 };
-  const overlayOrigin = { x: panelWidth * 2.5, y: 240 };
-  const posScale = 130;
-  const velScale = 95;
+  const topPanelWidth = canvas.width / 2;
+  const topBottomSplitY = 560;
+  const posOrigin = { x: topPanelWidth * 0.5, y: 270 };
+  const velOrigin = { x: topPanelWidth * 1.5, y: 260 };
+  const overlayOrigin = { x: canvas.width * 0.5, y: 830 };
+  const posScale = 150;
+  const velScale = 120;
+  const overlayPosScale = posScale;
   const stepDurationMs = 650;
 
   let model = buildHodographeSteps(Number(slider.value));
@@ -492,21 +495,21 @@ function runHodographe() {
     }
 
     const step = model.steps[currentStep];
-    const overlayVelScale = posScale * ((model.h * model.h) / MU);
+    const overlayVelScale = overlayPosScale * ((model.h * model.h) / MU);
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = '#dce8ff';
     ctx.font = '15px Inter, system-ui, sans-serif';
-    ctx.fillText('Plan des positions', panelWidth * 0.24, 28);
-    ctx.fillText('Plan des vitesses (hodographe)', panelWidth + panelWidth * 0.16, 28);
-    ctx.fillText('Superposition position + hodographe tourne', panelWidth * 2 + panelWidth * 0.02, 28);
+    ctx.fillText('Plan des positions', posOrigin.x - 115, 30);
+    ctx.fillText('Plan des vitesses (hodographe)', velOrigin.x - 145, 30);
+    ctx.fillText('Superposition position + hodographe tourne', overlayOrigin.x - 170, topBottomSplitY + 32);
 
     ctx.strokeStyle = 'rgba(118, 227, 255, 0.2)';
     ctx.beginPath();
-    ctx.moveTo(panelWidth, 35);
-    ctx.lineTo(panelWidth, 425);
-    ctx.moveTo(panelWidth * 2, 35);
-    ctx.lineTo(panelWidth * 2, 425);
+    ctx.moveTo(topPanelWidth, 35);
+    ctx.lineTo(topPanelWidth, topBottomSplitY - 25);
+    ctx.moveTo(20, topBottomSplitY);
+    ctx.lineTo(canvas.width - 20, topBottomSplitY);
     ctx.stroke();
 
     drawReferenceOrbit(posOrigin, posScale);
@@ -556,8 +559,8 @@ function runHodographe() {
     ctx.fillStyle = '#dce8ff';
     ctx.fillText('P', p0.x + 10, p0.y - 8);
 
-    const legendStart = { x: 52, y: 412 };
-    const legendEnd = { x: 112, y: 412 };
+    const legendStart = { x: 52, y: topBottomSplitY - 30 };
+    const legendEnd = { x: 112, y: topBottomSplitY - 30 };
     drawArrow(ctx, legendStart.x, legendStart.y, legendEnd.x, legendEnd.y, '#8be9a8', 3);
     ctx.fillStyle = '#8be9a8';
     const drX = legendEnd.x + 8;
@@ -568,7 +571,7 @@ function runHodographe() {
     ctx.fillStyle = '#dce8ff';
     ctx.fillText('vecteur déplacement', legendEnd.x + 34, legendEnd.y + 4);
 
-    drawAxesAt(ctx, velOrigin.x, velOrigin.y, 130);
+    drawAxesAt(ctx, velOrigin.x, velOrigin.y, 165);
     const base = MU / model.h;
     const circleCenter = toVelCanvas({ x: 0, y: base * model.e }, velOrigin, velScale);
     ctx.strokeStyle = 'rgba(255, 209, 102, 0.8)';
@@ -609,8 +612,8 @@ function runHodographe() {
     ctx.arc(vNext.x, vNext.y, 4, 0, TAU);
     ctx.fill();
 
-    drawAxesAt(ctx, overlayOrigin.x, overlayOrigin.y, 130);
-    drawReferenceOrbit(overlayOrigin, posScale);
+    drawAxesAt(ctx, overlayOrigin.x, overlayOrigin.y, 240);
+    drawReferenceOrbit(overlayOrigin, overlayPosScale);
     drawRotatedTheoreticalHodograph(overlayOrigin, overlayVelScale);
 
     ctx.strokeStyle = '#76e3ff';
@@ -633,7 +636,6 @@ function runHodographe() {
 
   requestAnimationFrame(render);
 }
-
 const page = document.body.dataset.page;
 if (page === 'home') runHome();
 if (page === 'kepler') runKepler();
