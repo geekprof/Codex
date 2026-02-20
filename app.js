@@ -613,8 +613,32 @@ function runHodographe() {
     ctx.fill();
 
     drawAxesAt(ctx, overlayOrigin.x, overlayOrigin.y, 240);
-    drawReferenceOrbit(overlayOrigin, overlayPosScale);
     drawRotatedTheoreticalHodograph(overlayOrigin, overlayVelScale);
+
+    ctx.strokeStyle = 'rgba(139, 233, 168, 0.45)';
+    ctx.lineWidth = 1.2;
+    ctx.setLineDash([5, 4]);
+    ctx.beginPath();
+    for (let theta = 0; theta <= TAU + 0.01; theta += 0.02) {
+      const radius = (1 * (1 - model.e * model.e)) / (1 + model.e * Math.cos(theta));
+      const point = toPosCanvas({ x: radius * Math.cos(theta), y: radius * Math.sin(theta) }, overlayOrigin, overlayPosScale);
+      if (theta === 0) ctx.moveTo(point.x, point.y);
+      else ctx.lineTo(point.x, point.y);
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.strokeStyle = '#8be9a8';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let i = 0; i <= currentStep; i++) {
+      const point = toPosCanvas(model.steps[i].point, overlayOrigin, overlayPosScale);
+      if (i === 0) ctx.moveTo(point.x, point.y);
+      else ctx.lineTo(point.x, point.y);
+    }
+    const positionNext = toPosCanvas(step.nextPoint, overlayOrigin, overlayPosScale);
+    ctx.lineTo(positionNext.x, positionNext.y);
+    ctx.stroke();
 
     ctx.strokeStyle = '#76e3ff';
     ctx.lineWidth = 2;
