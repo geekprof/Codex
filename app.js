@@ -415,8 +415,9 @@ function runHodographe() {
   const nValue = document.getElementById('n-steps-value');
   const stepValue = document.getElementById('hodo-step');
   const dThetaValue = document.getElementById('hodo-dtheta');
+  const toggle = document.getElementById('toggle-hodographe');
   const restart = document.getElementById('restart-hodographe');
-  if (!canvas || !slider || !nValue || !stepValue || !dThetaValue || !restart) return;
+  if (!canvas || !slider || !nValue || !stepValue || !dThetaValue || !toggle || !restart) return;
 
   const ctx = canvas.getContext('2d');
   const topPanelWidth = canvas.width / 2;
@@ -438,6 +439,8 @@ function runHodographe() {
   let model = buildHodographeSteps(Number(slider.value));
   let currentStep = 0;
   let lastAdvance = 0;
+  let isPaused = false;
+  let resumeNeedsClockSync = false;
 
   function resetModel() {
     model = buildHodographeSteps(Number(slider.value));
@@ -451,6 +454,11 @@ function runHodographe() {
 
   slider.addEventListener('input', resetModel);
   restart.addEventListener('click', resetModel);
+  toggle.addEventListener('click', () => {
+    isPaused = !isPaused;
+    if (!isPaused) resumeNeedsClockSync = true;
+    toggle.textContent = isPaused ? 'Reprendre' : 'Pause';
+  });
   resetModel();
 
   function toPosCanvas(point, origin = posOrigin, scale = posScale) {
@@ -495,7 +503,11 @@ function runHodographe() {
 
   function render(ts) {
     if (lastAdvance === 0) lastAdvance = ts;
-    if (ts - lastAdvance >= stepDurationMs) {
+    if (resumeNeedsClockSync) {
+      lastAdvance = ts;
+      resumeNeedsClockSync = false;
+    }
+    if (!isPaused && ts - lastAdvance >= stepDurationMs) {
       lastAdvance = ts;
       currentStep = (currentStep + 1) % model.steps.length;
     }
