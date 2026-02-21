@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Applications | HodoAstro</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body data-page="applications">
+    <header class="site-header">
+      <a class="logo" href="index.html">HodoAstro</a>
+      <nav>
+        <a href="index.html">Accueil</a>
+        <a href="kepler.html">Mouvement képlérien</a>
+        <a href="construction.html">Construction du hodographe</a>
+        <a href="hodographe.html">Hodographe</a>
+        <a href="applications.html" aria-current="page">Applications</a>
+      </nav>
+    </header>
+
+    <main class="page-layout">
+      <section>
+        <h1>Applications astrophysiques et spatiales</h1>
+        <div class="grid cards">
+          <article>
+            <h2>Navigation interplanétaire</h2>
+            <p>Comparer rapidement l'effet de manœuvres impulsives sur la vitesse orbitale et ses directions possibles.</p>
+          </article>
+          <article>
+            <h2>Comètes très excentriques</h2>
+            <p>Visualiser l'accélération spectaculaire au passage au périhélie via le rayon du cercle hodographique.</p>
+          </article>
+          <article>
+            <h2>Pédagogie avancée</h2>
+            <p>Relier géométrie, lois de Kepler et invariants dynamiques dans un même schéma visuel.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Animation : vitesse au cours de l'orbite</h2>
+        <canvas id="applications-canvas" width="860" height="380" aria-label="Animation des variations de vitesse"></canvas>
+      </section>
+    </main>
+
+    <footer><p>Page 4 — Applications du hodographe.</p></footer>
+    <script src="app.js"></script>
+  </body>
+</html>

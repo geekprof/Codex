@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mouvement képlérien | HodoAstro</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+  </head>
+  <body data-page="kepler">
+    <header class="site-header">
+      <a class="logo" href="index.html">HodoAstro</a>
+      <nav>
+        <a href="index.html">Accueil</a>
+        <a href="kepler.html" aria-current="page">Mouvement képlérien</a>
+        <a href="construction.html">Construction du hodographe</a>
+        <a href="hodographe.html">Hodographe</a>
+        <a href="applications.html">Applications</a>
+      </nav>
+    </header>
+
+    <main class="page-layout">
+      <section>
+        <h1>Pourquoi l'orbite est une conique ?</h1>
+        <p>
+          Pour une force gravitationnelle centrale
+          \(\vec F = -\mu m\,\vec r / r^3\), le moment cinétique spécifique
+          \(h = |\vec r \times \vec v|\) est conservé.
+          L'équation polaire de la trajectoire devient :
+        </p>
+        <p class="formula">\[r(\theta)=\dfrac{p}{1+e\cos\theta}\]</p>
+        <p>
+          Avec \(p = h^2/\mu\) et \(e\) l'excentricité. Ellipse, parabole et hyperbole sont donc un même cadre.
+        </p>
+      </section>
+
+      <section class="panel">
+        <h2>Animation : position et vitesse instantanée</h2>
+        <canvas id="kepler-canvas" width="860" height="390" aria-label="Orbite et hodographe en animation"></canvas>
+        <p class="legend">
+          À gauche : orbite elliptique et vecteur vitesse tangent. À droite : hodographe (lieu de la vitesse) circulaire.
+        </p>
+      </section>
+    </main>
+
+    <footer><p>Page 2 — Mouvement képlérien.</p></footer>
+    <script src="app.js"></script>
+  </body>
+</html>
