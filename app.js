@@ -601,6 +601,20 @@ function runHodographe() {
     ctx.stroke();
     ctx.setLineDash([]);
 
+    // Repères géométriques du plan des vitesses.
+    ctx.fillStyle = '#dce8ff';
+    ctx.beginPath();
+    ctx.arc(velOrigin.x, velOrigin.y, 4, 0, TAU);
+    ctx.fill();
+    ctx.fillText('O', velOrigin.x + 10, velOrigin.y - 8);
+
+    ctx.fillStyle = '#ffd166';
+    ctx.beginPath();
+    ctx.arc(circleCenter.x, circleCenter.y, 5, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = '#dce8ff';
+    ctx.fillText('C', circleCenter.x + 10, circleCenter.y - 8);
+
     ctx.strokeStyle = colorVelocity;
     ctx.lineWidth = 2;
     ctx.beginPath();
@@ -631,8 +645,36 @@ function runHodographe() {
     ctx.arc(vNext.x, vNext.y, 4, 0, TAU);
     ctx.fill();
 
+    const overlayEllipseRightX = (1 - model.e) * overlayPosScale;
+    const overlayHodoLeftFromO = (1 - model.e) * overlayPosScale * Math.sqrt(1 - model.e * model.e);
+    const overlayGap = 56;
+    const overlayVelShiftX = overlayEllipseRightX + overlayHodoLeftFromO + overlayGap;
+    const overlayVelOrigin = { x: overlayOrigin.x + overlayVelShiftX, y: overlayOrigin.y };
+
     drawAxesAt(ctx, overlayOrigin.x, overlayOrigin.y, bottomAxesHalfSize);
-    drawRotatedTheoreticalHodograph(overlayOrigin, overlayVelScale);
+    drawRotatedTheoreticalHodograph(overlayVelOrigin, overlayVelScale);
+
+    // In this overlay, the velocity hodograph is shifted right of the ellipse.
+    ctx.fillStyle = '#ffd166';
+    ctx.beginPath();
+    ctx.arc(overlayOrigin.x, overlayOrigin.y, 6, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = '#dce8ff';
+    ctx.fillText('S', overlayOrigin.x - 20, overlayOrigin.y - 14);
+
+    const overlayBase = MU / model.h;
+    const overlayCircleCenter = toVelCanvas({ x: overlayBase * model.e, y: 0 }, overlayVelOrigin, overlayVelScale);
+    ctx.fillStyle = '#ffd166';
+    ctx.beginPath();
+    ctx.arc(overlayVelOrigin.x, overlayVelOrigin.y, 5, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = '#ffd166';
+    ctx.beginPath();
+    ctx.arc(overlayCircleCenter.x, overlayCircleCenter.y, 5, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = '#dce8ff';
+    ctx.fillText('O', overlayVelOrigin.x + 12, overlayVelOrigin.y + 20);
+    ctx.fillText('C', overlayCircleCenter.x + 10, overlayCircleCenter.y - 8);
 
     ctx.strokeStyle = colorDashed;
     ctx.lineWidth = 1.2;
@@ -645,6 +687,27 @@ function runHodographe() {
       else ctx.lineTo(point.x, point.y);
     }
     ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Bottom graph: show all radial construction segments from the start.
+    ctx.strokeStyle = colorDashed;
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3, 4]);
+    for (let i = 0; i < model.steps.length; i++) {
+      const posPoint = toPosCanvas(model.steps[i].point, overlayOrigin, overlayPosScale);
+      ctx.beginPath();
+      ctx.moveTo(overlayOrigin.x, overlayOrigin.y);
+      ctx.lineTo(posPoint.x, posPoint.y);
+      ctx.stroke();
+    }
+    for (let i = 0; i < model.steps.length; i++) {
+      const rotatedVel = { x: model.steps[i].velocity.y, y: -model.steps[i].velocity.x };
+      const velPoint = toVelCanvas(rotatedVel, overlayVelOrigin, overlayVelScale);
+      ctx.beginPath();
+      ctx.moveTo(overlayCircleCenter.x, overlayCircleCenter.y);
+      ctx.lineTo(velPoint.x, velPoint.y);
+      ctx.stroke();
+    }
     ctx.setLineDash([]);
 
     ctx.strokeStyle = colorPosition;
@@ -664,12 +727,12 @@ function runHodographe() {
     ctx.beginPath();
     for (let i = 0; i <= currentStep; i++) {
       const rotated = { x: model.steps[i].velocity.y, y: -model.steps[i].velocity.x };
-      const point = toVelCanvas(rotated, overlayOrigin, overlayVelScale);
+      const point = toVelCanvas(rotated, overlayVelOrigin, overlayVelScale);
       if (i === 0) ctx.moveTo(point.x, point.y);
       else ctx.lineTo(point.x, point.y);
     }
     const rotatedNext = { x: step.nextVelocity.y, y: -step.nextVelocity.x };
-    const pointNext = toVelCanvas(rotatedNext, overlayOrigin, overlayVelScale);
+    const pointNext = toVelCanvas(rotatedNext, overlayVelOrigin, overlayVelScale);
     ctx.lineTo(pointNext.x, pointNext.y);
     ctx.stroke();
 
