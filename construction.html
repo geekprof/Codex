@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Construction du hodographe | HodoAstro</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body data-page="construction">
+    <header class="site-header">
+      <a class="logo" href="index.html">HodoAstro</a>
+      <nav>
+        <a href="index.html">Accueil</a>
+        <a href="kepler.html">Mouvement képlérien</a>
+        <a href="construction.html" aria-current="page">Construction du hodographe</a>
+        <a href="hodographe.html">Hodographe</a>
+        <a href="applications.html">Applications</a>
+      </nav>
+    </header>
+
+    <main class="page-layout">
+      <section>
+        <h1>Construire le hodographe pas à pas</h1>
+        <p>
+          Réglez l'excentricité pour observer comment l'orbite s'allonge tandis que le hodographe reste un cercle (de centre décalé).
+          C'est une signature forte de la loi de Newton.
+        </p>
+        <div class="controls">
+          <label for="ecc">Excentricité e: <span id="ecc-value">0.40</span></label>
+          <input id="ecc" type="range" min="0.05" max="0.85" step="0.01" value="0.40" />
+        </div>
+        <ol>
+          <li>Choisir un point de l'orbite.</li>
+          <li>Calculer la vitesse correspondante via l'intégrale d'énergie.</li>
+          <li>Reporter ce vecteur dans le plan des vitesses.</li>
+          <li>Faire varier l'anomalie vraie : l'ensemble décrit un cercle.</li>
+        </ol>
+      </section>
+
+      <section class="panel">
+        <canvas id="construction-canvas" width="860" height="420" aria-label="Construction interactive du hodographe"></canvas>
+      </section>
+    </main>
+
+    <footer><p>Page 3 — Construction interactive.</p></footer>
+    <script src="app.js"></script>
+  </body>
+</html>

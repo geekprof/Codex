@@ -1,0 +1,756 @@
+const TAU = Math.PI * 2;
+const MU = 1;
+
+function getOrbitalState(a, e, theta) {
+  const p = a * (1 - e * e);
+  const r = p / (1 + e * Math.cos(theta));
+  const x = r * Math.cos(theta);
+  const y = r * Math.sin(theta);
+
+  const h = Math.sqrt(MU * p);
+  const vr = (MU / h) * e * Math.sin(theta);
+  const vt = (MU / h) * (1 + e * Math.cos(theta));
+  const vx = vr * Math.cos(theta) - vt * Math.sin(theta);
+  const vy = vr * Math.sin(theta) + vt * Math.cos(theta);
+
+  return { p, r, x, y, h, vx, vy, speed: Math.hypot(vx, vy) };
+}
+
+function advanceTheta(theta, state, dt = 1.6) {
+  // dt est le multiplicateur global de vitesse temporelle de la simulation.
+  // Plus dt est grand, plus l'astre avance vite sur son orbite.
+  const omega = state.h / (state.r * state.r);
+  return theta + dt * omega;
+}
+
+function drawAxesAt(ctx, cx, cy, halfSize, color = '#2e4c7a') {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(cx - halfSize, cy);
+  ctx.lineTo(cx + halfSize, cy);
+  ctx.moveTo(cx, cy - halfSize);
+  ctx.lineTo(cx, cy + halfSize);
+  ctx.stroke();
+}
+
+function drawOrbitFromFocus(ctx, fx, fy, a, e, stroke = '#4e8de6') {
+  ctx.strokeStyle = stroke;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (let th = 0; th <= TAU; th += 0.02) {
+    const pt = getOrbitalState(a, e, th);
+    const x = fx + pt.x;
+    const y = fy - pt.y;
+    if (th === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+}
+
+function runHome() {
+  const canvas = document.getElementById('home-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+
+  const focus = { x: 160, y: 180 };
+  const hodoOrigin = { x: 400, y: 180 };
+  const a = 110;
+  const e = 0.45;
+  // Echelle du hodographe (taille du cercle + distance du point vitesse).
+  const velocityScale = 1000;
+  // Echelle du vecteur vitesse dessine depuis l'origine du plan des vitesses.
+  const positionVectorScale = 95;
+  let theta = 0;
+
+  const render = () => {
+    const state = getOrbitalState(a, e, theta);
+    // Regle ici la vitesse de defilement de cette simulation.
+    theta = advanceTheta(theta, state, 1.7);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    drawOrbitFromFocus(ctx, focus.x, focus.y, a, e, '#5ca5ff');
+
+    ctx.fillStyle = '#ffd166';
+    ctx.beginPath();
+    ctx.arc(focus.x, focus.y, 7, 0, TAU);
+    ctx.fill();
+
+    const px = focus.x + state.x;
+    const py = focus.y - state.y;
+    ctx.fillStyle = '#76e3ff';
+    ctx.beginPath();
+    ctx.arc(px, py, 6, 0, TAU);
+    ctx.fill();
+
+    drawAxesAt(ctx, hodoOrigin.x, hodoOrigin.y, 95);
+
+    const baseSpeed = MU / state.h;
+    const circleRadius = velocityScale * baseSpeed;
+    const circleCy = hodoOrigin.y - velocityScale * baseSpeed * e;
+    ctx.strokeStyle = '#ffd166';
+    ctx.beginPath();
+    ctx.arc(hodoOrigin.x, circleCy, circleRadius, 0, TAU);
+    ctx.stroke();
+
+    const hvx = hodoOrigin.x + velocityScale * state.vx;
+    const hvy = hodoOrigin.y - velocityScale * state.vy;
+    ctx.fillStyle = '#76e3ff';
+    ctx.beginPath();
+    ctx.arc(hvx, hvy, 5, 0, TAU);
+    ctx.fill();
+
+    ctx.strokeStyle = '#76e3ff';
+    ctx.beginPath();
+    ctx.moveTo(hodoOrigin.x, hodoOrigin.y);
+    ctx.lineTo(
+      hodoOrigin.x + positionVectorScale * state.vx,
+      hodoOrigin.y - positionVectorScale * state.vy
+    );
+    ctx.stroke();
+
+    requestAnimationFrame(render);
+  };
+
+  render();
+}
+
+function runKepler() {
+  const canvas = document.getElementById('kepler-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+
+  const a = 120;
+  const e = 0.55;
+  const focus = { x: 220, y: 195 };
+  const hodoOrigin = { x: 640, y: 195 };
+  // Echelle du hodographe (page Kepler).
+  const velocityScale = 190;
+  const orbitVectorScale = 42;
+  let theta = 0;
+
+  const render = () => {
+    const state = getOrbitalState(a, e, theta);
+    // Regle ici la vitesse de defilement de cette simulation.
+    theta = advanceTheta(theta, state, 1.45);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = '#dce8ff';
+    ctx.fillText('Plan des positions', focus.x - 55, 22);
+    ctx.fillText('Plan des vitesses (hodographe)', hodoOrigin.x - 95, 22);
+
+    drawOrbitFromFocus(ctx, focus.x, focus.y, a, e);
+
+    ctx.fillStyle = '#ffd166';
+    ctx.beginPath();
+    ctx.arc(focus.x, focus.y, 7, 0, TAU);
+    ctx.fill();
+
+    const px = focus.x + state.x;
+    const py = focus.y - state.y;
+    ctx.fillStyle = '#76e3ff';
+    ctx.beginPath();
+    ctx.arc(px, py, 6, 0, TAU);
+    ctx.fill();
+
+    ctx.strokeStyle = '#76e3ff';
+    ctx.beginPath();
+    ctx.moveTo(px, py);
+    ctx.lineTo(px + orbitVectorScale * state.vx, py - orbitVectorScale * state.vy);
+    ctx.stroke();
+
+    drawAxesAt(ctx, hodoOrigin.x, hodoOrigin.y, 130);
+
+    const baseSpeed = MU / state.h;
+    const circleRadius = velocityScale * baseSpeed;
+    const circleCy = hodoOrigin.y - velocityScale * baseSpeed * e;
+    ctx.strokeStyle = '#ffd166';
+    ctx.beginPath();
+    ctx.arc(hodoOrigin.x, circleCy, circleRadius, 0, TAU);
+    ctx.stroke();
+
+    const hvx = hodoOrigin.x + velocityScale * state.vx;
+    const hvy = hodoOrigin.y - velocityScale * state.vy;
+
+    ctx.fillStyle = '#76e3ff';
+    ctx.beginPath();
+    ctx.arc(hvx, hvy, 5, 0, TAU);
+    ctx.fill();
+
+    ctx.strokeStyle = '#76e3ff';
+    ctx.beginPath();
+    ctx.moveTo(hodoOrigin.x, hodoOrigin.y);
+    ctx.lineTo(hvx, hvy);
+    ctx.stroke();
+
+    requestAnimationFrame(render);
+  };
+
+  render();
+}
+
+function runConstruction() {
+  const canvas = document.getElementById('construction-canvas');
+  const slider = document.getElementById('ecc');
+  const output = document.getElementById('ecc-value');
+  if (!canvas || !slider || !output) return;
+  const ctx = canvas.getContext('2d');
+
+  const a = 130;
+  const focus = { x: 220, y: 215 };
+  const hodoOrigin = { x: 645, y: 215 };
+  // Echelle du hodographe (page Construction).
+  const velocityScale = 165;
+  const orbitVectorScale = 35;
+  let theta = 0;
+
+  const render = () => {
+    const e = Number(slider.value);
+    const state = getOrbitalState(a, e, theta);
+    // Regle ici la vitesse de defilement de cette simulation.
+    theta = advanceTheta(theta, state, 1.55);
+    output.textContent = e.toFixed(2);
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#dce8ff';
+    ctx.fillText(`e = ${e.toFixed(2)}`, 24, 26);
+
+    drawOrbitFromFocus(ctx, focus.x, focus.y, a, e);
+
+    ctx.fillStyle = '#ffd166';
+    ctx.beginPath();
+    ctx.arc(focus.x, focus.y, 7, 0, TAU);
+    ctx.fill();
+
+    const px = focus.x + state.x;
+    const py = focus.y - state.y;
+    ctx.fillStyle = '#76e3ff';
+    ctx.beginPath();
+    ctx.arc(px, py, 6, 0, TAU);
+    ctx.fill();
+
+    ctx.strokeStyle = '#76e3ff';
+    ctx.beginPath();
+    ctx.moveTo(px, py);
+    ctx.lineTo(px + orbitVectorScale * state.vx, py - orbitVectorScale * state.vy);
+    ctx.stroke();
+
+    drawAxesAt(ctx, hodoOrigin.x, hodoOrigin.y, 130);
+
+    const baseSpeed = MU / state.h;
+    const circleRadius = velocityScale * baseSpeed;
+    const circleCy = hodoOrigin.y - velocityScale * baseSpeed * e;
+    ctx.strokeStyle = '#ffd166';
+    ctx.beginPath();
+    ctx.arc(hodoOrigin.x, circleCy, circleRadius, 0, TAU);
+    ctx.stroke();
+
+    const hvx = hodoOrigin.x + velocityScale * state.vx;
+    const hvy = hodoOrigin.y - velocityScale * state.vy;
+    ctx.fillStyle = '#76e3ff';
+    ctx.beginPath();
+    ctx.arc(hvx, hvy, 5, 0, TAU);
+    ctx.fill();
+
+    ctx.strokeStyle = '#76e3ff';
+    ctx.beginPath();
+    ctx.moveTo(hodoOrigin.x, hodoOrigin.y);
+    ctx.lineTo(hvx, hvy);
+    ctx.stroke();
+
+    requestAnimationFrame(render);
+  };
+
+  render();
+}
+
+function runApplications() {
+  const canvas = document.getElementById('applications-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+
+  const focus = { x: 225, y: 190 };
+  const a = 130;
+  const e = 0.7;
+  const vMin = Math.sqrt((MU / a) * ((1 - e) / (1 + e)));
+  const vMax = Math.sqrt((MU / a) * ((1 + e) / (1 - e)));
+  let theta = 0;
+
+  const render = () => {
+    const state = getOrbitalState(a, e, theta);
+    // Regle ici la vitesse de defilement de cette simulation.
+    theta = advanceTheta(theta, state, 1.5);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    drawOrbitFromFocus(ctx, focus.x, focus.y, a, e);
+
+    ctx.fillStyle = '#ffd166';
+    ctx.beginPath();
+    ctx.arc(focus.x, focus.y, 7, 0, TAU);
+    ctx.fill();
+
+    const px = focus.x + state.x;
+    const py = focus.y - state.y;
+    ctx.fillStyle = '#76e3ff';
+    ctx.beginPath();
+    ctx.arc(px, py, 6, 0, TAU);
+    ctx.fill();
+
+    const barX = 520;
+    const barY = 80;
+    const barH = 240;
+    const speedRatio = (state.speed - vMin) / (vMax - vMin);
+    const clampedRatio = Math.max(0, Math.min(1, speedRatio));
+
+    ctx.strokeStyle = '#2e4c7a';
+    ctx.strokeRect(barX, barY, 40, barH);
+
+    const fillH = clampedRatio * barH;
+    ctx.fillStyle = '#76e3ff';
+    ctx.fillRect(barX, barY + barH - fillH, 40, fillH);
+
+    ctx.fillStyle = '#dce8ff';
+    ctx.fillText('vitesse orbitale', barX - 20, barY - 15);
+    ctx.fillText('apoastre', 575, 300);
+    ctx.fillText('p\u00E9riastre', 575, 100);
+
+    requestAnimationFrame(render);
+  };
+
+  render();
+}
+
+function cross2(a, b) {
+  return a.x * b.y - a.y * b.x;
+}
+
+function drawArrow(ctx, x1, y1, x2, y2, color = '#76e3ff', width = 2) {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const len = Math.hypot(dx, dy);
+  if (len < 1e-6) return;
+  const ux = dx / len;
+  const uy = dy / len;
+  const head = Math.min(10, Math.max(6, len * 0.25));
+
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineWidth = width;
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - head * ux + 0.5 * head * uy, y2 - head * uy - 0.5 * head * ux);
+  ctx.lineTo(x2 - head * ux - 0.5 * head * uy, y2 - head * uy + 0.5 * head * ux);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function buildHodographeSteps(n, e = 0.55) {
+  const a = 1;
+  const p = a * (1 - e * e);
+  const h = Math.sqrt(MU * p);
+  const dTheta = TAU / n;
+  const dvScale = -(MU / h) * dTheta;
+
+  let point = { x: a * (1 - e), y: 0 };
+  let velocity = { x: 0, y: (MU / h) * (1 + e) };
+  const steps = [];
+
+  for (let k = 0; k < n; k++) {
+    const theta = Math.atan2(point.y, point.x);
+    const midTheta = theta + 0.5 * dTheta;
+    const rHat = { x: Math.cos(midTheta), y: Math.sin(midTheta) };
+    const targetTheta = theta + dTheta;
+    const targetDir = { x: Math.cos(targetTheta), y: Math.sin(targetTheta) };
+
+    const denom = cross2(velocity, targetDir);
+    let nextPoint;
+    if (Math.abs(denom) < 1e-9) {
+      const nextR = p / (1 + e * Math.cos(targetTheta));
+      nextPoint = { x: nextR * targetDir.x, y: nextR * targetDir.y };
+    } else {
+      const t = -cross2(point, targetDir) / denom;
+      const lambda = -cross2(velocity, point) / denom;
+      if (t <= 1e-9 || lambda <= 1e-9) {
+        const nextR = p / (1 + e * Math.cos(targetTheta));
+        nextPoint = { x: nextR * targetDir.x, y: nextR * targetDir.y };
+      } else {
+        nextPoint = {
+          x: point.x + t * velocity.x,
+          y: point.y + t * velocity.y
+        };
+      }
+    }
+
+    const deltaV = { x: dvScale * rHat.x, y: dvScale * rHat.y };
+    const nextVelocity = {
+      x: velocity.x + deltaV.x,
+      y: velocity.y + deltaV.y
+    };
+
+    steps.push({
+      point: { ...point },
+      velocity: { ...velocity },
+      theta,
+      targetTheta,
+      nextPoint,
+      deltaV,
+      nextVelocity
+    });
+
+    point = nextPoint;
+    velocity = nextVelocity;
+  }
+
+  return { steps, dTheta, h, e };
+}
+
+function runHodographe() {
+  const canvas = document.getElementById('hodographe-canvas');
+  const slider = document.getElementById('n-steps');
+  const nValue = document.getElementById('n-steps-value');
+  const stepValue = document.getElementById('hodo-step');
+  const dThetaValue = document.getElementById('hodo-dtheta');
+  const toggle = document.getElementById('toggle-hodographe');
+  const restart = document.getElementById('restart-hodographe');
+  if (!canvas || !slider || !nValue || !stepValue || !dThetaValue || !toggle || !restart) return;
+
+  const ctx = canvas.getContext('2d');
+  const topPanelWidth = canvas.width / 2;
+  const topBottomSplitY = 620;
+  const posOrigin = { x: topPanelWidth * 0.5, y: 320 };
+  const velOrigin = { x: topPanelWidth * 1.5, y: 320 };
+  const overlayOrigin = { x: canvas.width * 0.5, y: 950 };
+  const zoomFactor = 1.25;
+  const posScale = 150 * zoomFactor;
+  const velScale = 120 * zoomFactor;
+  const overlayPosScale = posScale;
+  const topAxesHalfSize = 165 * zoomFactor;
+  const bottomAxesHalfSize = 240 * zoomFactor;
+  const stepDurationMs = 650;
+  const colorPosition = '#4e8de6';
+  const colorVelocity = '#ffd166';
+  const colorDashed = 'rgba(180, 192, 210, 0.6)';
+
+  let model = buildHodographeSteps(Number(slider.value));
+  let currentStep = 0;
+  let lastAdvance = 0;
+  let isPaused = false;
+  let resumeNeedsClockSync = false;
+
+  function resetModel() {
+    model = buildHodographeSteps(Number(slider.value));
+    currentStep = 0;
+    lastAdvance = 0;
+    nValue.textContent = String(model.steps.length);
+    stepValue.textContent = `0 / ${model.steps.length}`;
+    const dThetaDeg = (model.dTheta * 180) / Math.PI;
+    dThetaValue.textContent = `${model.dTheta.toFixed(4)} rad (${dThetaDeg.toFixed(2)}\u00B0)`;
+  }
+
+  slider.addEventListener('input', resetModel);
+  restart.addEventListener('click', resetModel);
+  toggle.addEventListener('click', () => {
+    isPaused = !isPaused;
+    if (!isPaused) resumeNeedsClockSync = true;
+    toggle.textContent = isPaused ? 'Reprendre' : 'Pause';
+  });
+  resetModel();
+
+  function toPosCanvas(point, origin = posOrigin, scale = posScale) {
+    return { x: origin.x + scale * point.x, y: origin.y - scale * point.y };
+  }
+
+  function toVelCanvas(velocity, origin = velOrigin, scale = velScale) {
+    return { x: origin.x + scale * velocity.x, y: origin.y - scale * velocity.y };
+  }
+
+  function drawReferenceOrbit(origin = posOrigin, scale = posScale) {
+    ctx.strokeStyle = colorDashed;
+    ctx.lineWidth = 1.2;
+    ctx.setLineDash([5, 4]);
+    ctx.beginPath();
+    const p = 1 * (1 - model.e * model.e);
+    for (let theta = 0; theta <= TAU + 0.01; theta += 0.02) {
+      const radius = p / (1 + model.e * Math.cos(theta));
+      const point = toPosCanvas({ x: radius * Math.cos(theta), y: radius * Math.sin(theta) }, origin, scale);
+      if (theta === 0) ctx.moveTo(point.x, point.y);
+      else ctx.lineTo(point.x, point.y);
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  function drawRotatedTheoreticalHodograph(origin, scale) {
+    ctx.strokeStyle = colorDashed;
+    ctx.lineWidth = 1.2;
+    ctx.setLineDash([5, 4]);
+    ctx.beginPath();
+    for (let theta = 0; theta <= TAU + 0.01; theta += 0.02) {
+      const state = getOrbitalState(1, model.e, theta);
+      const rotated = { x: state.vy, y: -state.vx };
+      const point = toVelCanvas(rotated, origin, scale);
+      if (theta === 0) ctx.moveTo(point.x, point.y);
+      else ctx.lineTo(point.x, point.y);
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  function render(ts) {
+    if (lastAdvance === 0) lastAdvance = ts;
+    if (resumeNeedsClockSync) {
+      lastAdvance = ts;
+      resumeNeedsClockSync = false;
+    }
+    if (!isPaused && ts - lastAdvance >= stepDurationMs) {
+      lastAdvance = ts;
+      currentStep = (currentStep + 1) % model.steps.length;
+    }
+
+    const step = model.steps[currentStep];
+    const overlayVelScale = overlayPosScale * ((model.h * model.h) / MU);
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#dce8ff';
+    ctx.font = '22px Inter, system-ui, sans-serif';
+    ctx.fillText('Plan des positions', posOrigin.x - 150, 40);
+    ctx.fillText('Plan des vitesses (hodographe)', velOrigin.x - 190, 40);
+    ctx.fillText('Juxtaposition position + hodographe tourn\u00E9 de 90\u00B0', overlayOrigin.x - 225, topBottomSplitY + 42);
+    ctx.font = '18px Inter, system-ui, sans-serif';
+
+    ctx.strokeStyle = 'rgba(118, 227, 255, 0.2)';
+    ctx.beginPath();
+    ctx.moveTo(topPanelWidth, 35);
+    ctx.lineTo(topPanelWidth, topBottomSplitY - 25);
+    ctx.moveTo(20, topBottomSplitY);
+    ctx.lineTo(canvas.width - 20, topBottomSplitY);
+    ctx.stroke();
+
+    drawReferenceOrbit(posOrigin, posScale);
+
+    ctx.fillStyle = '#ffd166';
+    ctx.beginPath();
+    ctx.arc(posOrigin.x, posOrigin.y, 7, 0, TAU);
+    ctx.fill();
+    ctx.fillText('S', posOrigin.x + 10, posOrigin.y - 10);
+
+    const p0 = toPosCanvas(step.point, posOrigin, posScale);
+    const p1 = toPosCanvas(step.nextPoint, posOrigin, posScale);
+
+    ctx.strokeStyle = colorPosition;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let i = 0; i <= currentStep; i++) {
+      const point = toPosCanvas(model.steps[i].point, posOrigin, posScale);
+      if (i === 0) ctx.moveTo(point.x, point.y);
+      else ctx.lineTo(point.x, point.y);
+    }
+    ctx.lineTo(p1.x, p1.y);
+    ctx.stroke();
+
+    drawArrow(ctx, p0.x, p0.y, p1.x, p1.y, '#8be9a8', 2.5);
+
+    const ray0 = toPosCanvas({ x: 1.7 * Math.cos(step.theta), y: 1.7 * Math.sin(step.theta) }, posOrigin, posScale);
+    const ray1 = toPosCanvas({ x: 1.7 * Math.cos(step.targetTheta), y: 1.7 * Math.sin(step.targetTheta) }, posOrigin, posScale);
+    ctx.strokeStyle = colorDashed;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(posOrigin.x, posOrigin.y);
+    ctx.lineTo(ray0.x, ray0.y);
+    ctx.moveTo(posOrigin.x, posOrigin.y);
+    ctx.lineTo(ray1.x, ray1.y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.fillStyle = colorPosition;
+    ctx.beginPath();
+    ctx.arc(p0.x, p0.y, 6, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = '#8be9a8';
+    ctx.beginPath();
+    ctx.arc(p1.x, p1.y, 4, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = '#dce8ff';
+    ctx.fillText('P', p0.x + 10, p0.y - 8);
+
+    const legendStart = { x: 52, y: topBottomSplitY - 30 };
+    const legendEnd = { x: 112, y: topBottomSplitY - 30 };
+    drawArrow(ctx, legendStart.x, legendStart.y, legendEnd.x, legendEnd.y, '#8be9a8', 3);
+    ctx.fillStyle = '#8be9a8';
+    const drX = legendEnd.x + 8;
+    const drY = legendEnd.y + 4;
+    ctx.fillText('\u0394r', drX, drY);
+    const drWidth = ctx.measureText('\u0394r').width;
+    drawArrow(ctx, drX + 1, drY - 13, drX + drWidth - 1, drY - 13, '#8be9a8', 1.8);
+    ctx.fillStyle = '#dce8ff';
+    ctx.fillText('vecteur d\u00E9placement', legendEnd.x + 34, legendEnd.y + 4);
+
+    drawAxesAt(ctx, velOrigin.x, velOrigin.y, topAxesHalfSize);
+    const base = MU / model.h;
+    const circleCenter = toVelCanvas({ x: 0, y: base * model.e }, velOrigin, velScale);
+    ctx.strokeStyle = colorDashed;
+    ctx.lineWidth = 1.2;
+    ctx.setLineDash([5, 4]);
+    ctx.beginPath();
+    ctx.arc(circleCenter.x, circleCenter.y, velScale * base, 0, TAU);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Repères géométriques du plan des vitesses.
+    ctx.fillStyle = '#dce8ff';
+    ctx.beginPath();
+    ctx.arc(velOrigin.x, velOrigin.y, 4, 0, TAU);
+    ctx.fill();
+    ctx.fillText('O', velOrigin.x + 10, velOrigin.y - 8);
+
+    ctx.fillStyle = '#ffd166';
+    ctx.beginPath();
+    ctx.arc(circleCenter.x, circleCenter.y, 5, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = '#dce8ff';
+    ctx.fillText('C', circleCenter.x + 10, circleCenter.y - 8);
+
+    ctx.strokeStyle = colorVelocity;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let i = 0; i <= currentStep; i++) {
+      const velocity = toVelCanvas(model.steps[i].velocity, velOrigin, velScale);
+      if (i === 0) ctx.moveTo(velocity.x, velocity.y);
+      else ctx.lineTo(velocity.x, velocity.y);
+    }
+    const vNext = toVelCanvas(step.nextVelocity, velOrigin, velScale);
+    ctx.lineTo(vNext.x, vNext.y);
+    ctx.stroke();
+
+    const v0 = toVelCanvas(step.velocity, velOrigin, velScale);
+    drawArrow(ctx, v0.x, v0.y, vNext.x, vNext.y, '#ff8fa3', 2.2);
+    ctx.fillStyle = '#ff8fa3';
+    const dvTextX = (v0.x + vNext.x) * 0.5 + 8;
+    const dvTextY = (v0.y + vNext.y) * 0.5 - 8;
+    ctx.fillText('\u0394v', dvTextX, dvTextY);
+    const dvWidth = ctx.measureText('\u0394v').width;
+    drawArrow(ctx, dvTextX + 1, dvTextY - 12, dvTextX + dvWidth - 1, dvTextY - 12, '#ff8fa3', 1.6);
+
+    ctx.fillStyle = colorVelocity;
+    ctx.beginPath();
+    ctx.arc(v0.x, v0.y, 5, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = '#8be9a8';
+    ctx.beginPath();
+    ctx.arc(vNext.x, vNext.y, 4, 0, TAU);
+    ctx.fill();
+
+    const overlayEllipseRightX = (1 - model.e) * overlayPosScale;
+    const overlayHodoLeftFromO = (1 - model.e) * overlayPosScale * Math.sqrt(1 - model.e * model.e);
+    const overlayGap = 56;
+    const overlayVelShiftX = overlayEllipseRightX + overlayHodoLeftFromO + overlayGap;
+    const overlayPosOrigin = { x: overlayOrigin.x - overlayVelShiftX * 0.5, y: overlayOrigin.y };
+    const overlayVelOrigin = { x: overlayPosOrigin.x + overlayVelShiftX, y: overlayPosOrigin.y };
+
+    ctx.strokeStyle = '#2e4c7a';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(overlayOrigin.x - bottomAxesHalfSize, overlayOrigin.y);
+    ctx.lineTo(overlayOrigin.x + bottomAxesHalfSize, overlayOrigin.y);
+    ctx.stroke();
+    drawRotatedTheoreticalHodograph(overlayVelOrigin, overlayVelScale);
+
+    // In this overlay, the velocity hodograph is shifted right of the ellipse.
+    ctx.fillStyle = '#ffd166';
+    ctx.beginPath();
+    ctx.arc(overlayPosOrigin.x, overlayPosOrigin.y, 6, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = '#dce8ff';
+    ctx.fillText('S', overlayPosOrigin.x - 20, overlayPosOrigin.y - 14);
+
+    const overlayBase = MU / model.h;
+    const overlayCircleCenter = toVelCanvas({ x: overlayBase * model.e, y: 0 }, overlayVelOrigin, overlayVelScale);
+    ctx.fillStyle = '#ffd166';
+    ctx.beginPath();
+    ctx.arc(overlayVelOrigin.x, overlayVelOrigin.y, 5, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = '#ffd166';
+    ctx.beginPath();
+    ctx.arc(overlayCircleCenter.x, overlayCircleCenter.y, 5, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = '#dce8ff';
+    ctx.fillText('O', overlayVelOrigin.x + 12, overlayVelOrigin.y + 20);
+    ctx.fillText('C', overlayCircleCenter.x + 10, overlayCircleCenter.y - 8);
+
+    ctx.strokeStyle = colorDashed;
+    ctx.lineWidth = 1.2;
+    ctx.setLineDash([5, 4]);
+    ctx.beginPath();
+    for (let theta = 0; theta <= TAU + 0.01; theta += 0.02) {
+      const radius = (1 * (1 - model.e * model.e)) / (1 + model.e * Math.cos(theta));
+      const point = toPosCanvas({ x: radius * Math.cos(theta), y: radius * Math.sin(theta) }, overlayPosOrigin, overlayPosScale);
+      if (theta === 0) ctx.moveTo(point.x, point.y);
+      else ctx.lineTo(point.x, point.y);
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Bottom graph: show all radial construction segments from the start.
+    ctx.strokeStyle = colorDashed;
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3, 4]);
+    for (let i = 0; i < model.steps.length; i++) {
+      const posPoint = toPosCanvas(model.steps[i].point, overlayPosOrigin, overlayPosScale);
+      ctx.beginPath();
+      ctx.moveTo(overlayPosOrigin.x, overlayPosOrigin.y);
+      ctx.lineTo(posPoint.x, posPoint.y);
+      ctx.stroke();
+    }
+    for (let i = 0; i < model.steps.length; i++) {
+      const rotatedVel = { x: model.steps[i].velocity.y, y: -model.steps[i].velocity.x };
+      const velPoint = toVelCanvas(rotatedVel, overlayVelOrigin, overlayVelScale);
+      ctx.beginPath();
+      ctx.moveTo(overlayCircleCenter.x, overlayCircleCenter.y);
+      ctx.lineTo(velPoint.x, velPoint.y);
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+
+    ctx.strokeStyle = colorPosition;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let i = 0; i <= currentStep; i++) {
+      const point = toPosCanvas(model.steps[i].point, overlayPosOrigin, overlayPosScale);
+      if (i === 0) ctx.moveTo(point.x, point.y);
+      else ctx.lineTo(point.x, point.y);
+    }
+    const positionNext = toPosCanvas(step.nextPoint, overlayPosOrigin, overlayPosScale);
+    ctx.lineTo(positionNext.x, positionNext.y);
+    ctx.stroke();
+
+    ctx.strokeStyle = colorVelocity;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let i = 0; i <= currentStep; i++) {
+      const rotated = { x: model.steps[i].velocity.y, y: -model.steps[i].velocity.x };
+      const point = toVelCanvas(rotated, overlayVelOrigin, overlayVelScale);
+      if (i === 0) ctx.moveTo(point.x, point.y);
+      else ctx.lineTo(point.x, point.y);
+    }
+    const rotatedNext = { x: step.nextVelocity.y, y: -step.nextVelocity.x };
+    const pointNext = toVelCanvas(rotatedNext, overlayVelOrigin, overlayVelScale);
+    ctx.lineTo(pointNext.x, pointNext.y);
+    ctx.stroke();
+
+    stepValue.textContent = `${currentStep + 1} / ${model.steps.length}`;
+    requestAnimationFrame(render);
+  }
+
+  requestAnimationFrame(render);
+}
+const page = document.body.dataset.page;
+if (page === 'home') runHome();
+if (page === 'kepler') runKepler();
+if (page === 'construction') runConstruction();
+if (page === 'applications') runApplications();
+if (page === 'hodographe') runHodographe();
