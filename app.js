@@ -520,7 +520,7 @@ function runHodographe() {
     ctx.font = '22px Inter, system-ui, sans-serif';
     ctx.fillText('Plan des positions', posOrigin.x - 150, 40);
     ctx.fillText('Plan des vitesses (hodographe)', velOrigin.x - 190, 40);
-    ctx.fillText('Superposition position + hodographe tourn\u00E9 de 90\u00B0', overlayOrigin.x - 225, topBottomSplitY + 42);
+    ctx.fillText('Juxtaposition position + hodographe tourn\u00E9 de 90\u00B0', overlayOrigin.x - 225, topBottomSplitY + 42);
     ctx.font = '18px Inter, system-ui, sans-serif';
 
     ctx.strokeStyle = 'rgba(118, 227, 255, 0.2)';
@@ -649,18 +649,24 @@ function runHodographe() {
     const overlayHodoLeftFromO = (1 - model.e) * overlayPosScale * Math.sqrt(1 - model.e * model.e);
     const overlayGap = 56;
     const overlayVelShiftX = overlayEllipseRightX + overlayHodoLeftFromO + overlayGap;
-    const overlayVelOrigin = { x: overlayOrigin.x + overlayVelShiftX, y: overlayOrigin.y };
+    const overlayPosOrigin = { x: overlayOrigin.x - overlayVelShiftX * 0.5, y: overlayOrigin.y };
+    const overlayVelOrigin = { x: overlayPosOrigin.x + overlayVelShiftX, y: overlayPosOrigin.y };
 
-    drawAxesAt(ctx, overlayOrigin.x, overlayOrigin.y, bottomAxesHalfSize);
+    ctx.strokeStyle = '#2e4c7a';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(overlayOrigin.x - bottomAxesHalfSize, overlayOrigin.y);
+    ctx.lineTo(overlayOrigin.x + bottomAxesHalfSize, overlayOrigin.y);
+    ctx.stroke();
     drawRotatedTheoreticalHodograph(overlayVelOrigin, overlayVelScale);
 
     // In this overlay, the velocity hodograph is shifted right of the ellipse.
     ctx.fillStyle = '#ffd166';
     ctx.beginPath();
-    ctx.arc(overlayOrigin.x, overlayOrigin.y, 6, 0, TAU);
+    ctx.arc(overlayPosOrigin.x, overlayPosOrigin.y, 6, 0, TAU);
     ctx.fill();
     ctx.fillStyle = '#dce8ff';
-    ctx.fillText('S', overlayOrigin.x - 20, overlayOrigin.y - 14);
+    ctx.fillText('S', overlayPosOrigin.x - 20, overlayPosOrigin.y - 14);
 
     const overlayBase = MU / model.h;
     const overlayCircleCenter = toVelCanvas({ x: overlayBase * model.e, y: 0 }, overlayVelOrigin, overlayVelScale);
@@ -682,7 +688,7 @@ function runHodographe() {
     ctx.beginPath();
     for (let theta = 0; theta <= TAU + 0.01; theta += 0.02) {
       const radius = (1 * (1 - model.e * model.e)) / (1 + model.e * Math.cos(theta));
-      const point = toPosCanvas({ x: radius * Math.cos(theta), y: radius * Math.sin(theta) }, overlayOrigin, overlayPosScale);
+      const point = toPosCanvas({ x: radius * Math.cos(theta), y: radius * Math.sin(theta) }, overlayPosOrigin, overlayPosScale);
       if (theta === 0) ctx.moveTo(point.x, point.y);
       else ctx.lineTo(point.x, point.y);
     }
@@ -694,9 +700,9 @@ function runHodographe() {
     ctx.lineWidth = 1;
     ctx.setLineDash([3, 4]);
     for (let i = 0; i < model.steps.length; i++) {
-      const posPoint = toPosCanvas(model.steps[i].point, overlayOrigin, overlayPosScale);
+      const posPoint = toPosCanvas(model.steps[i].point, overlayPosOrigin, overlayPosScale);
       ctx.beginPath();
-      ctx.moveTo(overlayOrigin.x, overlayOrigin.y);
+      ctx.moveTo(overlayPosOrigin.x, overlayPosOrigin.y);
       ctx.lineTo(posPoint.x, posPoint.y);
       ctx.stroke();
     }
@@ -714,11 +720,11 @@ function runHodographe() {
     ctx.lineWidth = 2;
     ctx.beginPath();
     for (let i = 0; i <= currentStep; i++) {
-      const point = toPosCanvas(model.steps[i].point, overlayOrigin, overlayPosScale);
+      const point = toPosCanvas(model.steps[i].point, overlayPosOrigin, overlayPosScale);
       if (i === 0) ctx.moveTo(point.x, point.y);
       else ctx.lineTo(point.x, point.y);
     }
-    const positionNext = toPosCanvas(step.nextPoint, overlayOrigin, overlayPosScale);
+    const positionNext = toPosCanvas(step.nextPoint, overlayPosOrigin, overlayPosScale);
     ctx.lineTo(positionNext.x, positionNext.y);
     ctx.stroke();
 
